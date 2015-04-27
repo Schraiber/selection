@@ -11,7 +11,15 @@ g++ -O3 -lgsl *.cpp -o sr
 ## Generating allele frequency bridges
 
 To generate a bridge, following the logic of Schraiber et al (2013), use the flag -b, followed by a comma separated list,
-`x0,xt,gamma,t', i.e. the initial frequency, the final frequency, the selection coefficient, and the timespan of the bridge.
+`x0,xt,gamma,t`, i.e. the initial frequency, the final frequency, the selection coefficient, and the timespan of the bridge.
+
+For example,
+
+```
+./sr -b .2,.6,100,.2 > myTraj.txt
+```
+
+will output a trajectory into the file myTraj.txt. Trajectory files consist of two lines, the first being the allele frequency trajecotry and the second line being the time points.
 
 ## Inference from allele frequency time series
 
