@@ -35,6 +35,7 @@ settings::settings(int argc, char* const argv[]) {
 	fOrigin = 0.0;
 	infer_age = 0;
 	popFile = "";
+    mySeed = time(0);
 
 	//read the parameters
 	int ac = 1;

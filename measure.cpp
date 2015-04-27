@@ -443,10 +443,19 @@ double cbpMeasure::rW(double kappa, int m) {
 	double u, w, z;
 	
 	bool done = 0;
+//    std::cout << "Generating W" << std::endl;
+//    std::cout << "kappa = " << kappa << ", m = " << m << std::endl;
+//    std::cout << "d = " << d << ", b = " << b << ", x = " << x << ", c = " << c << std::endl;
 	while (!done) {
+//        std::cout << "starting loop" << std::endl;
 		z = random->betaRv(d/2.0, d/2.0);
+//        std::cout << "z = " << z << std::endl;
 		w = (1.0-(1.0+b)*z)/(1.0-(1.0-b)*z);
+//        std::cout << "w = " << w << std::endl;
 		u = random->uniformRv();
+//        std::cout << "u = " << u << std::endl;
+//        std::cout << l*w+d*log(1.0-x*w)-c << " " << log(u) << std::endl;
+//        std::cin.ignore();
 		if (l*w+d*log(1.0-x*w)-c >= log(u)) {
 			done = 1;
 		}
@@ -538,9 +547,9 @@ path* wfMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vec
 		test_path = cbp->prop_bridge(x0, xt, t0, t,time_vec);
 		gir = cbp->log_girsanov_wf(test_path, 0, 0);
 		accept_prob = rescale + gir;
-		//std::cout << accept_prob << std::endl;
+//		std::cout << accept_prob << std::endl;
 		if (accept_prob > 0) {
-			std::cout << "Envelope is not sufficient" << std::endl;
+			std::cerr << "Envelope is not sufficient" << std::endl;
 			exit(1);
 		}
 		u = random->uniformRv();

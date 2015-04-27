@@ -20,7 +20,8 @@ int main (int argc, char * const argv[]) {
 	if (mySettings.get_bridge()) {
 		wfMeasure myWF(r,0);
 		std::vector<double> pars = mySettings.parse_bridge_pars();
-        std::cout << "Creating bridge with pars = " << 
+        std::cerr << "Creating bridge with (x0, xt, gamma, t) = (" << pars[0] << ", " << pars[1]
+            << ", " << pars[2] << ", " << pars[3] << ")" << std::endl;
 		myWF.set_num_test(mySettings.get_num_test());
 		myWF.set_gamma(pars[2]);
 		path* myPath = new path(myWF.fisher(pars[0]),myWF.fisher(pars[1]),0,pars[3],&myWF,mySettings);

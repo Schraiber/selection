@@ -417,7 +417,7 @@ double MbRandom::normalQuantile(double mu, double sigma, double p) {
  * \see http://stat.fsu.edu/~geo/diehard.html
  */
 double MbRandom::uniformRv(void) {
-
+    
 	// Returns a pseudo-random number between 0 and 1.
 	I1 = 36969 * (I1 & 0177777) + (I1 >> 16);
 	I2 = 18000 * (I2 & 0177777) + (I2 >> 16);
@@ -1506,7 +1506,7 @@ double MbRandom::rndGamma(double s) {
 	else if (s > 1.0)  
 		r = rndGamma2(s);
 	else           
-		r =- log(uniformRv());
+		r = -log(uniformRv());
 	return (r);
 }
 
@@ -1562,20 +1562,22 @@ double MbRandom::rndGamma2(double s) {
 
 	double			r, d, f, g, x;
 	static double	b, h, ss = 0.0;
-	
-	if (s != ss) 
+    
+
+    
+	if (s != ss)
 		{
 		b  = s - 1.0;
 		h  = sqrt(3.0 * s - 0.75);
 		ss = s;
-		}
-	for (;;) 
+        }
+	for (;;)
 		{
 		r = uniformRv();
 		g = r - r * r;
 		f = (r - 0.5) * h / sqrt(g);
 		x = b + f;
-		if (x <= 0.0) 
+		if (x <= 0.0)
 			continue;
 		r = uniformRv();
 		d = 64.0 * r * r * g * g * g;
