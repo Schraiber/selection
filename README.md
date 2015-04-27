@@ -16,10 +16,10 @@ To generate a bridge, following the logic of Schraiber et al (2013), use the fla
 For example,
 
 ```
-./sr -b .2,.6,100,.2 > myTraj.txt
+./sr -b 0.2,0.6,100,0.2 > myTraj.txt
 ```
 
-will output a trajectory into the file myTraj.txt. Trajectory files consist of two lines, the first being the allele frequency trajecotry and the second line being the time points.
+will output a trajectory for an allele with gamma = 100 going from a frequency of 0.2 to 0.6 in 0.2 diffusion time units into the file myTraj.txt. Trajectory files consist of two lines, the first being the allele frequency trajecotry and the second line being the time points.
 
 ## Inference from allele frequency time series
 
