@@ -650,19 +650,21 @@ double cbpMeasure::dadx_wf_r(double x, double t, double alpha1, double alpha2, p
 	}
 }
 
-double cbpMeasure::H_wfwf_r(double x, double t, double alpha1, double alpha2, double h1, double h2, popsize* rho, bool leftLimit) {
-	return 1.0/8.0*rho->getSize(t,leftLimit)*cos(x)*(2*(alpha2-alpha1)-((1.0-2.0*h2)*alpha2-(1.0-2.0*h1)*alpha1)*cos(x));
+double cbpMeasure::H_wfwf_r(double x, double t, double alpha1, double alpha1p, double alpha2, double alpha2p, popsize* rho, bool leftLimit) {
+	return 1.0/8.0*rho->getSize(t,leftLimit)*cos(x)*(2*(alpha2p-alpha2)+(2*(alpha1p-alpha1)+alpha2-alpha2p)*cos(x));
 }
 
-double cbpMeasure::dHdt_wfwf_r(double x, double t, double alpha1, double alpha2, double h1, double h2, popsize* rho, bool leftLimit) {
-	return 1.0/8.0*rho->getDeriv(t,leftLimit)*cos(x)*(2*(alpha2-alpha1)-((1.0-2.0*h2)*alpha2-(1.0-2.0*h1)*alpha1)*cos(x));
+double cbpMeasure::dHdt_wfwf_r(double x, double t, double alpha1, double alpha1p, double alpha2, double alpha2p, popsize* rho, bool leftLimit) {
+	return 1.0/8.0*rho->getDeriv(t,leftLimit)*cos(x)*(2*(alpha2p-alpha2)+(2*(alpha1p-alpha1)+alpha2-alpha2p)*cos(x));
 }
 
-double cbpMeasure::a2_wfwf_r(double x, double t, double alpha1, double alpha2, double h1, double h2, popsize* rho, bool leftLimit) {
-	return 1.0/64.0*(alpha1-alpha2-((1.0-2.0*h1)*alpha1-(1.0-2.0*h2)*alpha2)*cos(x))
-	* (-(16.0+(1.0-2.0*h1)*alpha1*rho->getSize(t,leftLimit)+(1.0-2.0*h2)*alpha2*rho->getSize(t,leftLimit))*cos(x)
-	   +((1.0-2.0*h1)*alpha1 + (1.0-2.0*h2)*alpha2)*rho->getSize(t)*cos(3.0*x)
-	   +4.0*(alpha1+alpha2)*rho->getSize(t)*sin(x)*sin(x));
+double cbpMeasure::a2_wfwf_r(double x, double t, double alpha1, double alpha1p, double alpha2, double alpha2p, popsize* rho, bool leftLimit) {
+	return 1.0/64.0*(alpha2p-alpha2+(2*(alpha1p-alpha1)+alpha2-alpha2p)
+                     *cos(x))*((-16.0+2.0*rho->getSize(t,leftLimit)*(alpha1+alpha1p)
+                     -rho->getSize(t,leftLimit)*(alpha2+alpha2p))
+                     *cos(x) + (-2.0*(alpha1+alpha1p)+alpha2+alpha2p)
+                     *rho->getSize(t,leftLimit)*cos(3*x)+4*(alpha2+alpha2p)
+                     *rho->getSize(t,leftLimit)*sin(x)*sin(x));
 }
 																																																																	
 double cbpMeasure::dadx_wfwf_r(double x, double t, double alpha1, double alpha2, double h1, double h2, popsize* rho, bool leftLimit) {
