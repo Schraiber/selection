@@ -667,8 +667,8 @@ double cbpMeasure::a2_wfwf_r(double x, double t, double alpha1, double alpha1p, 
                      *rho->getSize(t,leftLimit)*sin(x)*sin(x));
 }
 																																																																	
-double cbpMeasure::dadx_wfwf_r(double x, double t, double alpha1, double alpha2, double h1, double h2, popsize* rho, bool leftLimit) {
-	return 1.0/4.0*(cos(x)*(alpha1-alpha2)+((2.0*h1-1)*alpha1-(2.0*h2-1)*alpha2)*cos(2.0*x));
+double cbpMeasure::dadx_wfwf_r(double x, double t, double alpha1, double alpha1p, double alpha2, double alpha2p, popsize* rho, bool leftLimit) {
+	return 1.0/2.0*(alpha1p-alpha1)*cos(x);
 }
 
 
