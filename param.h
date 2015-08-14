@@ -69,8 +69,8 @@ private:
 
 class param_path: public param {
 public:
-	param_path(path* p, param_gamma* g, param_h* h, MbRandom* r): param(r) {curPath = p; minUpdate = 10; fracOfPath = 10; min_dt = .001; grid = 10; gam = g; dom = h;};
-	param_path(path* p, param_gamma* g, param_h* h, MbRandom* r, settings& s): param(r) {curPath = p; minUpdate = s.getMinUpdate(); fracOfPath = s.getFracOfPath(); min_dt = s.get_dt(); grid = s.get_grid(); fOrigin = acos(1.0-2.0*s.get_fOrigin()); gam = g; dom = h;};
+	param_path(path* p, param_gamma* a1, param_gamma* a2, MbRandom* r): param(r) {curPath = p; minUpdate = 10; fracOfPath = 10; min_dt = .001; grid = 10; a1 = a1; a2 = a2;};
+	param_path(path* p, param_gamma* a1, param_gamma* a2, MbRandom* r, settings& s): param(r) {curPath = p; minUpdate = s.getMinUpdate(); fracOfPath = s.getFracOfPath(); min_dt = s.get_dt(); grid = s.get_grid(); fOrigin = acos(1.0-2.0*s.get_fOrigin()); a1 = a1; a2 = a2;};
 	double propose();
 	double proposeAlleleAge(double newAge);
 	double proposeStart(double newStart);
@@ -91,8 +91,8 @@ private:
 	path* curPath;
 	path* newPath;
 	path* oldPath;
-	param_gamma* gam;
-	param_h* dom;
+	param_gamma* a1;
+	param_gamma* a2;
 	
 	std::vector<double> make_time_vector(double newAge, int end_index, popsize* rho);
 };

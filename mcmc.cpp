@@ -66,16 +66,16 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		//curPath->print_time(std::cout);
 	}
 	
-	param_gamma* gam = new param_gamma(0.0,random);
+	param_gamma* alpha1 = new param_gamma(0.0,random);
 	
-	param_h* h = new param_h(0.5,random);
+	param_gamma* alpha2 = new param_gamma(0.0,random);
 	
-	param_path* curParamPath = new param_path(curPath,gam,h,random,mySettings);
+	param_path* curParamPath = new param_path(curPath,alpha1,alpha2,random,mySettings);
 	
 	//initialize the parameter vector
 	std::vector<param*> pars;
-	pars.push_back(gam);
-	pars.push_back(h);
+	pars.push_back(alpha1);
+	pars.push_back(alpha2);
 	if (!mySettings.get_infer_age()) {
 		pars.push_back(new start_freq(curPath->get_traj(0),random,curParamPath));
 	} else {
@@ -113,9 +113,9 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	
 	//run mcmc
 	if (mySettings.get_infer_age()) {
-		paramFile << "gen\tlnL\tpathlnL\tgamma\th\tage\tyt\ttuning.gamma\ttuning.h\ttuning.age\ttuning.yt" << std::endl;
+		paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\tage\tyt\ttuning.gamma\ttuning.h\ttuning.age\ttuning.yt" << std::endl;
 	} else {
-		paramFile << "gen\tlnL\tpathlnL\tgamma\th\ty0\tyt\ttuning.gamma\ttuning.h\ttuning.y0\ttuning.yt" << std::endl;
+		paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\ty0\tyt\ttuning.gamma\ttuning.h\ttuning.y0\ttuning.yt" << std::endl;
 	}
 	for (gen = 0; gen < num_gen; gen++) {
 		
@@ -195,7 +195,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		if (curProp == 0 || curProp == 1 || curProp == 5 || curProp == 6) {
 			//need to compute LL ratio due to the new alpha...
 			cbpMeasure quickCBP(random);
-			LLRatio += quickCBP.log_girsanov_wfwf_r(curPath, pars[0]->get(), pars[0]->getOld(), pars[1]->get(), pars[1]->getOld(), curPath->get_pop());
+			LLRatio += quickCBP.log_girsanov_wfwf_r(curPath, pars[0]->getOld(), pars[0]->get(), pars[1]->getOld(), pars[1]->get(), curPath->get_pop());
 		}
 		double mh = LLRatio+propRatio+priorRatio;
 		u = random->uniformRv();

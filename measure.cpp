@@ -188,7 +188,7 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 	for (j = 0; j < dconts.size()-1; j++) {
 		//get the potentials while I'm at it.
 		//first the "beginning" potential 
-		Hm_w0 += H_wf_r(p->get_traj(i), p->get_time(i), alpha, h, rho);
+		Hm_w0 += H_wf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, rho);
 		i++;
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
@@ -200,7 +200,7 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 		int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 		//then the "end" potential
-		Hm_wt += H_wf_r(p->get_traj(i), p->get_time(i), alpha, h, rho, 1);
+		Hm_wt += H_wf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, rho, 1);
 	}
 
 	//compute the time integral of the square
@@ -300,7 +300,7 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 	for (j = 0; j < dconts.size()-1; j++) {
 		//get the potentials while I'm at it.
 		//first the "beginning" potential 
-		Hm_w0 += H_wfwf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, h1, h2, rho);
+		Hm_w0 += H_wfwf_r(p->get_traj(i), p->get_time(i), alpha1, alpha1p, alpha2, alpha2p, rho);
 		
 		i++;
 		//integrate over the interval using the trapezoid rule

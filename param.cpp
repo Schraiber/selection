@@ -299,8 +299,8 @@ double param_path::propose(double x0, double xt, double t0, double t, std::vecto
 //	std::cout << myWiener.log_girsanov(newPath, myCBP, -INFINITY, INFINITY,1) << std::endl;
 	
 	//compute the likelihood ratio of current path under WF measure relative to CBP measure
-	propRatio += myCBP->log_girsanov_wf_r(newPath, gam->get(), dom->get(),rho, 1);
-	propRatio -= myCBP->log_girsanov_wf_r(oldPath, gam->get(), dom->get(),rho, 1);
+	propRatio += myCBP->log_girsanov_wf_r(newPath, a1->get(), a2->get(),rho, 1);
+	propRatio -= myCBP->log_girsanov_wf_r(oldPath, a1->get(), a2->get(),rho, 1);
 	
 	
 //	newPath->print_traj(std::cout);
@@ -363,8 +363,8 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 	
 	//compute the likelihood ratio of current path under WF measure relative to CBP measure
 	//NB: These ARE bridges but I want to compute the thing myself!
-	propRatio += myCBP->log_girsanov_wf_r(newPath, gam->get(), dom->get(), rho,0);
-	propRatio -= myCBP->log_girsanov_wf_r(oldPath, gam->get(), dom->get(), rho,0);
+	propRatio += myCBP->log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0);
+	propRatio -= myCBP->log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0);
 
 //	if (t0 < -0.1580 && t0 > -0.1589) {
 //		std::cout << "New path!" << std::endl;
@@ -389,11 +389,11 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 		std::cerr << "New path:" << std::endl;
 		newPath->print_traj(std::cerr);
 		newPath->print_time(std::cerr);
-		std::cerr << myCBP->log_girsanov_wf_r(newPath, gam->get(), dom->get(), rho,0) << std::endl;
+		std::cerr << myCBP->log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0) << std::endl;
 		std::cerr << "Old path:" << std::endl;
 		oldPath->print_traj(std::cerr);
 		oldPath->print_time(std::cerr);
-		std::cerr << myCBP->log_girsanov_wf_r(oldPath, gam->get(), dom->get(), rho,0) << std::endl;
+		std::cerr << myCBP->log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0) << std::endl;
 		std::cerr << "Times New Old" << std::endl;
 		std::cerr << tNew << " " << tOld << std::endl;
 		std::cerr << "Time likelihood ratio" << std::endl;
