@@ -158,7 +158,7 @@ double cbpMeasure::log_girsanov_wf(path* p, double alpha, bool is_bridge) {
 	}
 }
 
-double cbpMeasure::log_girsanov_wf_r(path* p, double alpha, double h, popsize* rho, bool is_bridge) {
+double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, popsize* rho, bool is_bridge) {
 	int i;
 	int j;
 	int path_len = p->get_length();
@@ -192,12 +192,12 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha, double h, popsize* r
 		i++;
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
-			int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha,h,rho)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha,h,rho))/2.0
+			int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
 		//and the last little bit, where I need a left limit
-		int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha,h,rho,1)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha,h,rho))/2.0
+		int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 		//then the "end" potential
 		Hm_wt += H_wf_r(p->get_traj(i), p->get_time(i), alpha, h, rho, 1);
@@ -209,12 +209,12 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha, double h, popsize* r
 	for (j = 0; j < dconts.size()-1; j++) {
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
-			int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha,h,rho)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha,h,rho))/2.0
+			int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
 		//and the last little bit, where I need a left limit
-		int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha,h,rho,1)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha,h,rho))/2.0
+		int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
 	
@@ -224,12 +224,12 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha, double h, popsize* r
 	for (j = 0; j < dconts.size()-1; j++) {
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
-			int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha,h,rho)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha,h,rho))/2.0
+			int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
 		//and the last little bit, where I need a left limit
-		int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha,h,rho,1)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha,h,rho))/2.0
+		int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
 	
@@ -275,7 +275,7 @@ double cbpMeasure::log_girsanov_wfwf(path* p, double alpha1, double alpha2) {
 	return (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare);
 }
 
-double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha2, double h1, double h2, popsize* rho) {
+double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, double alpha2, double alpha2p, popsize* rho) {
 	int i;
 	int j;
 	int path_len = p->get_length();
@@ -305,15 +305,15 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha2, do
 		i++;
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
-			int_mderiv += (dadx_wfwf_r(p->get_traj(i),p->get_time(i),alpha1, alpha2,h1,h2,rho)+dadx_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,h1,h2,rho))/2.0
+			int_mderiv += (dadx_wfwf_r(p->get_traj(i),p->get_time(i),alpha1, alpha1p,alpha2,alpha2p,rho)+dadx_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
 		//and the last little bit, where I need a left limit
-		int_mderiv += (dadx_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,h1,h2,rho,1)+dadx_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,h1,h2,rho))/2.0
+		int_mderiv += (dadx_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho,1)+dadx_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 		//then the "end" potential
-		Hm_wt += H_wfwf_r(p->get_traj(i), p->get_time(i), alpha1,alpha2, h1,h2, rho, 1);
+		Hm_wt += H_wfwf_r(p->get_traj(i), p->get_time(i), alpha1,alpha1p, alpha2,alpha2p, rho, 1);
 	}
 	
 	//compute the time integral of the square
@@ -322,12 +322,12 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha2, do
 	for (j = 0; j < dconts.size()-1; j++) {
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
-			int_msquare += (a2_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,h1,h2,rho)+a2_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,h1,h2,rho))/2.0
+			int_msquare += (a2_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho)+a2_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
 		//and the last little bit, where I need a left limit
-		int_msquare += (a2_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,h1,h2,rho,1)+a2_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,h1,h2,rho))/2.0
+        int_msquare += (a2_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho,1)+a2_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
 	
@@ -337,12 +337,12 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha2, do
 	for (j = 0; j < dconts.size()-1; j++) {
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
-			int_mtime += (dHdt_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,h1,h2,rho)+dHdt_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,h1,h2,rho))/2.0
+			int_mtime += (dHdt_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho)+dHdt_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
 		//and the last little bit, where I need a left limit
-		int_mtime += (dHdt_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,h1,h2,rho,1)+dHdt_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,h1,h2,rho))/2.0
+		int_mtime += (dHdt_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho,1)+dHdt_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
 	
