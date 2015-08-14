@@ -621,32 +621,32 @@ double cbpMeasure::dadx_wfwf(double x, double t, double alpha1, double alpha2) {
 	return 1.0/2.0*cos(x)*(alpha1-alpha2);
 }
 
-double cbpMeasure::H_wf_r(double x, double t, double alpha, double h, popsize* rho,bool leftLimit) {
+double cbpMeasure::H_wf_r(double x, double t, double alpha1, double alpha2, popsize* rho,bool leftLimit) {
 	if (x == 0) {
-		return -1.0/8.0*alpha*rho->getSize(t,leftLimit)*(1.0+2.0*h);
+		return -1.0/8.0*rho->getSize(t,leftLimit)*(2*alpha1+alpha2);
 	} else {
-		return log(x)/2.0-1.0/8.0*(alpha*rho->getSize(t,leftLimit)*cos(x)*(2.0+(2.0*h-1.0)*cos(x))+4.0*log(sin(x)));
+		return log(x)/2.0-1.0/8.0*(rho->getSize(t,leftLimit)*cos(x)*(2*alpha2-(2*alpha1-alpha2)*cos(x))+4*log(sin(x)));
 	}
 }
 
-double cbpMeasure::dHdt_wf_r(double x, double t, double alpha, double h, popsize* rho, bool leftLimit) {
-	return -1.0/8.0*alpha*rho->getDeriv(t, leftLimit)*cos(x)*(2.0+(2.0*h-1.0)*cos(x));
+double cbpMeasure::dHdt_wf_r(double x, double t, double alpha1, double alpha2, popsize* rho, bool leftLimit) {
+	return -1.0/8.0*rho->getDeriv(t,leftLimit)*cos(x)*(2*alpha2-(2*alpha1-alpha2)*cos(x));
 }
 
-double cbpMeasure::a2_wf_r(double x, double t, double alpha, double h, popsize* rho, bool leftLimit) {
+double cbpMeasure::a2_wf_r(double x, double t, double alpha1, double alpha2, popsize* rho, bool leftLimit) {
 	if (x == 0) {
-		return -1.0/6.0*(1.0/rho->getSize(t,leftLimit)+3.0*alpha*h);
+		return -1.0/6.0*(1.0/rho->getSize(t,leftLimit)+3.0*alpha1);
 	} else {
-		return 1.0/(16.0*rho->getSize(t, leftLimit))*pow(alpha*rho->getSize(t, leftLimit)*sin(x)*(1+(2*h-1)*cos(x))-2.0/tan(x),2)
-		- 1.0/(4.0*x*x*rho->getSize(t, leftLimit));
+		return 1.0/(16.0*rho->getSize(t,leftLimit))*pow(rho->getSize(t,leftLimit)*sin(x)*(alpha2+(2*alpha1-alpha2))-2*1/tan(x),2)
+        - 1.0/(4.0*x*x*rho->getSize(t,leftLimit));
 	}
 }
 
-double cbpMeasure::dadx_wf_r(double x, double t, double alpha, double h, popsize* rho, bool leftLimit) {
+double cbpMeasure::dadx_wf_r(double x, double t, double alpha1, double alpha2, popsize* rho, bool leftLimit) {
 	if (x == 0) {
-		return 1.0/6.0*(1.0/rho->getSize(t, leftLimit)+3.0*alpha*h);
+		return 1.0/6.0*(1.0/rho->getSize(t, leftLimit)+3.0*alpha1);
 	} else {
-		return 1.0/4.0*(alpha*(cos(x)+(2.0*h-1.0)*cos(2*x))+2.0/(sin(x)*sin(x)*rho->getSize(t, leftLimit)))-1.0/(2.0*x*x*rho->getSize(t, leftLimit));
+		return 1.0/2.0*(alpha1*cos(x)+1.0/(sin(x)*sin(x)*rho->getSize(t,leftLimit)))-1.0/(2.0*x*x*rho->getSize(t,leftLimit));
 	}
 }
 
