@@ -69,8 +69,8 @@ private:
 
 class param_path: public param {
 public:
-	param_path(path* p, param_gamma* a1, param_gamma* a2, MbRandom* r): param(r) {curPath = p; minUpdate = 10; fracOfPath = 10; min_dt = .001; grid = 10; a1 = a1; a2 = a2;};
-	param_path(path* p, param_gamma* a1, param_gamma* a2, MbRandom* r, settings& s): param(r) {curPath = p; minUpdate = s.getMinUpdate(); fracOfPath = s.getFracOfPath(); min_dt = s.get_dt(); grid = s.get_grid(); fOrigin = acos(1.0-2.0*s.get_fOrigin()); a1 = a1; a2 = a2;};
+	param_path(path* p, param_gamma* al1, param_gamma* al2, MbRandom* r): param(r) {curPath = p; minUpdate = 10; fracOfPath = 10; min_dt = .001; grid = 10; a1 = al1; a2 = al2;};
+	param_path(path* p, param_gamma* al1, param_gamma* al2, MbRandom* r, settings& s): param(r) {curPath = p; minUpdate = s.getMinUpdate(); fracOfPath = s.getFracOfPath(); min_dt = s.get_dt(); grid = s.get_grid(); fOrigin = acos(1.0-2.0*s.get_fOrigin()); a1 = al1; a2 = al2;};
 	double propose();
 	double proposeAlleleAge(double newAge);
 	double proposeStart(double newStart);

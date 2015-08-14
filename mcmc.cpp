@@ -87,8 +87,8 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	//initialize the proposal ratios
 	//probably move this somewhere else
 	std::vector<double> propChance(0);
-	propChance.push_back(1); //update gamma 1
-	propChance.push_back(1); //update h 1
+	propChance.push_back(1); //update alpha1 1
+	propChance.push_back(1); //update alpha2 1
 	propChance.push_back(2); //update start/age 2
 	propChance.push_back(2); //update end 2
 	propChance.push_back(10); //update path 5
@@ -136,6 +136,10 @@ void mcmc::no_linked_sites(settings& mySettings) {
 //			std::cout << "Start of gen" << std::endl;
 //			curPath->print_time();
 //		}
+        
+//        if (gen==248) {
+//            std::cout << "Yo" << std::endl;
+//        }
 		
 		double oldPathlnL = 0;
 		if (curProp == 2) {
@@ -148,6 +152,10 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			propRatio = pars[curProp]->propose();
 			priorRatio = pars[curProp]->prior();
 		}
+        
+        if (propRatio!=propRatio) {
+            std::cout << curProp << " " << propRatio << std::endl;
+        }
 		
 //		if (curProp == 5) {
 //			double curParVal = pars[0]->get();

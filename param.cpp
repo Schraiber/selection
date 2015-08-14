@@ -122,7 +122,7 @@ double end_freq::prior() {
 
 //selects a random position to update
 double param_path::propose() {	
-	int start_index = random->discreteUniformRv(0, curPath->get_length()-(minUpdate+curPath->get_length()/fracOfPath));
+	int start_index = random->discreteUniformRv(1, curPath->get_length()-(minUpdate+curPath->get_length()/fracOfPath));
 	int end_index = start_index + minUpdate + curPath->get_length()/fracOfPath - 1; 
 	double x0 = curPath->get_traj(start_index);
 	double xt = curPath->get_traj(end_index);

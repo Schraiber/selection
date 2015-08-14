@@ -284,8 +284,7 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 	double t0 = p->get_time(0);
 	double tt = p->get_time(path_len -1);
 	//convert to tau
-	double tau0 = rho->getTau(t0);
-	double taut = rho->getTau(tt);
+
 	
 	//compute everything for test measure m
 	double Hm_wt = 0;
