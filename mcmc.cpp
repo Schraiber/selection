@@ -66,9 +66,9 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		//curPath->print_time(std::cout);
 	}
 	
-	param_gamma* alpha1 = new param_gamma(0.0,random);
+	param_gamma* alpha1 = new param_gamma(50.0,random);
 	
-	param_gamma* alpha2 = new param_gamma(0.0,random);
+	param_gamma* alpha2 = new param_gamma(25.0,random);
 	
 	param_path* curParamPath = new param_path(curPath,alpha1,alpha2,random,mySettings);
 	
