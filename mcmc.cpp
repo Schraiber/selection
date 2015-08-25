@@ -89,8 +89,8 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	std::vector<double> propChance(0);
 	propChance.push_back(1); //update alpha1 1
 	propChance.push_back(1); //update alpha2 1
-	propChance.push_back(2); //update start/age 2
-	propChance.push_back(2); //update end 2
+	propChance.push_back(10); //update start/age 2
+	propChance.push_back(5); //update end 2
 	propChance.push_back(10); //update path 5
 //	propChance.push_back(.1); //gamma -> -gamma .1
 //	propChance.push_back(.1); //h -> h->1-h .1
@@ -113,9 +113,9 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	
 	//run mcmc
 	if (mySettings.get_infer_age()) {
-		paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\tage\tyt\ttuning.gamma\ttuning.h\ttuning.age\ttuning.yt" << std::endl;
+		paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\tage\tyt\ttuning.alpha1\ttuning.alpha2\ttuning.age\ttuning.yt" << std::endl;
 	} else {
-		paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\ty0\tyt\ttuning.gamma\ttuning.h\ttuning.y0\ttuning.yt" << std::endl;
+		paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\ty0\tyt\ttuning.alpha1\ttuning.alpha2\ttuning.y0\ttuning.yt" << std::endl;
 	}
 	for (gen = 0; gen < num_gen; gen++) {
 		
@@ -137,10 +137,18 @@ void mcmc::no_linked_sites(settings& mySettings) {
 //			curPath->print_time();
 //		}
         
-//        if (gen==248) {
+//        if (gen==215404) {
 //            std::cout << "Yo" << std::endl;
 //        }
 		
+        
+        for (int s=0; s<curPath->get_length(); s++) {
+            if (curPath->get_traj(s) < 0 || curPath->get_traj(s) > PI) {
+                std::cout << s << " " << curPath->get_traj(s) << std::endl;
+                exit(1);
+            }
+        }
+        
 		double oldPathlnL = 0;
 		if (curProp == 2) {
 			cbpMeasure testCBP(random);
@@ -152,10 +160,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			propRatio = pars[curProp]->propose();
 			priorRatio = pars[curProp]->prior();
 		}
-        
-        if (propRatio!=propRatio) {
-            std::cout << curProp << " " << propRatio << std::endl;
-        }
+
 		
 //		if (curProp == 5) {
 //			double curParVal = pars[0]->get();
@@ -200,6 +205,10 @@ void mcmc::no_linked_sites(settings& mySettings) {
 //		std::cout << std::endl;
 		
 		double LLRatio = curlnL-oldlnL;
+        if (curlnL != curlnL || oldlnL != oldlnL) {
+            std::cout << curlnL << " " << oldlnL << std::endl;
+            exit(1);
+        }
 		if (curProp == 0 || curProp == 1 || curProp == 5 || curProp == 6) {
 			//need to compute LL ratio due to the new alpha...
 			cbpMeasure quickCBP(random);

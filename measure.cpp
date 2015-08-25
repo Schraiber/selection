@@ -192,6 +192,9 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 		i++;
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
+            if (p->get_traj(i) < 0 || p->get_traj(i) > PI) {
+                return -INFINITY; //Make sure the proposed path is stuck in the right space
+            }
 			int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
@@ -304,6 +307,9 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 		i++;
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
+            if (p->get_traj(i) < 0 || p->get_traj(i) > PI) {
+                return -INFINITY; //Make sure the proposed path is stuck in the right space
+            }
 			int_mderiv += (dadx_wfwf_r(p->get_traj(i),p->get_time(i),alpha1, alpha1p,alpha2,alpha2p,rho)+dadx_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;

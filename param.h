@@ -40,6 +40,7 @@ protected:
 	double curVal;
 	double oldVal;
 	double tuning;
+    double minTuning;
 	int numProp;
 	int numAccept;
 	int numTunings;
@@ -49,7 +50,7 @@ protected:
 
 class param_gamma: public param {
 public:
-	param_gamma(double x, MbRandom* r): param(x, r) {scaling = 100.0; tuning=10.0;};
+    param_gamma(double x, MbRandom* r): param(x, r) {scaling = 100.0; tuning=10.0; minTuning=0.0;};
 	double propose(); 
 	double prior(); 
 	
@@ -59,7 +60,7 @@ private:
 
 class param_h: public param {
 public:
-	param_h(double x, MbRandom* r): param(x, r) {scaling = 0.5; tuning=0.5;};
+    param_h(double x, MbRandom* r): param(x, r) {scaling = 0.5; tuning=0.5; minTuning=0.0;};
 	double propose(); 
 	double prior(); 
 	
@@ -100,7 +101,7 @@ private:
 //NB: even though it says "freq", this really the transformed frequency
 class start_freq: public param {
 public:
-	start_freq(double x, MbRandom* r, param_path* p): param(x, r) {curParamPath = p;};
+    start_freq(double x, MbRandom* r, param_path* p): param(x, r) {curParamPath = p; minTuning=0.0;};
 	double propose();
 	double prior(); 
 	
@@ -111,7 +112,7 @@ private:
 class end_freq: public param {
 public:
 	//SEE ABOVE!
-	end_freq(double x, MbRandom* r, param_path* p): param(x, r) {curParamPath = p;};
+    end_freq(double x, MbRandom* r, param_path* p): param(x, r) {curParamPath = p; minTuning=3.14/500.;};
 	double propose();
 	double prior();
 	
@@ -140,6 +141,7 @@ public:
 		curParamPath = p; 
 		popSize = ((wfSamplePath*)(p->get_path()))->get_pop();
 		tuning = .2;
+        minTuning = min_dt*50;
 	};
 	double propose();
 	double prior();

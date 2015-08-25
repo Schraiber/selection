@@ -27,6 +27,9 @@ void param::updateTuning() {
 		} else {
 			tuning = exp(log(tuning)-scaleFactor);
 		}
+        if (tuning < minTuning) {
+            tuning = minTuning;
+        }
 	}
 	numAccept = 0;
 	numProp = 0;
