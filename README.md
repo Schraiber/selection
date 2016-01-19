@@ -40,6 +40,37 @@ The population size history is a 3-column white-space-separated file. Each line 
 
 The repository includes two sample population size histories, `constant.pop`, which reflects a constant population size, and `horse.all.pop`, which reflects the population history of horses as described by Der Sarkissian et al (2015).
 
+The essential command line consists of the following flags
+
+```
+-X comma separated list of derived allele counts at each sampling time
+-N comma separated list of sample sizes at each sampling time
+-T comma separated list of sampling times
+-P path to population size history file
+-o output file prefix
+```
+
+This will generate three output files:
+
+1. output_prefix.param: a tab-separated list of samples from the MCMC
+2. output_prefix.traj: a list of trajectories sampled from the MCMC
+3. output_prefix.time: a list of the times corresponding to each point in each sampled trajectory
+
+You may also wish to control some aspects of the MCMC:
+
+```
+-n number of MCMC cycles to run
+-f frequency of printing output to the screen
+-s frequency of sampling from the posterior
+-F fraction of the allele frequency to update during a trajectory update move
+```
+
+For instance, the following command line performs MCMC inference of an allele sampled from a constant population:
+
+```
+./sr -X 0,0,2,11,17 -N 20,20,20,20,20 -T -0.6,-0.44994994994995,-0.2997997997998,-0.14964964964965,0 -n 500000 -d 0.001 -F 20 -f 1000 -s 100 -P constant.pop -e 8067 -a -o output
+```
+
 ## Other flags that might be relevant
 
 ```
