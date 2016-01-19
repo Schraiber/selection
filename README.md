@@ -25,13 +25,20 @@ will output a trajectory for an allele with gamma = 100 going from a frequency o
 
 The basic input for generating an inference of selection coefficients and allele ages from an allele frequency time series are
 
-1. Sampling times, measured in diffusion time units
+1. Sampling times, in units of 2N_0 generations
 2. Sample sizes, in number of chromosomes
 3. Counts of the derived allele, in number of chromsoomes
 4. A population size history
 
 It's very important that you are consistent in setting the time scale between items 1 and 4. 
 
+The population size history is a 3-column white-space-separated file. Each line is one epoch of population size, which can be constant or exponential growth. For each epoch, each column is
+
+1. The population size at the most *ancient* time in the epoch, relative to N_0
+2. The growth rate of that epoch, scaled by 2N_0
+3. The most ancient time of the epoch, in units of 2N_0 generations
+
+The repository includes two sample population size histories, `constant.pop`, which reflects a constant population size, and `horse.all.pop`, which reflects the population history of horses as described by Der Sarkissian et al (2015).
 
 ## Other flags that might be relevant
 
