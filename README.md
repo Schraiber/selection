@@ -23,7 +23,15 @@ will output a trajectory for an allele with gamma = 100 going from a frequency o
 
 ## Inference from allele frequency time series
 
-Probably you shouldn't do this.
+The basic input for generating an inference of selection coefficients and allele ages from an allele frequency time series are
+
+1. Sampling times, measured in diffusion time units
+2. Sample sizes, in number of chromosomes
+3. Counts of the derived allele, in number of chromsoomes
+4. A population size history
+
+It's very important that you are consistent in setting the time scale between items 1 and 4. 
+
 
 ## Other flags that might be relevant
 
