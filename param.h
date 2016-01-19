@@ -141,7 +141,7 @@ public:
 		curParamPath = p; 
 		popSize = ((wfSamplePath*)(p->get_path()))->get_pop();
 		tuning = .2;
-        minTuning = min_dt*50;
+        minTuning = min_dt*10;
 	};
 	double propose();
 	double prior();

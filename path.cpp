@@ -228,7 +228,7 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 		std::cout << "Allele frequencies for " << num_samples << " times but sample sizes for " << sampleSize.size() << " times" << std::endl;
 		exit(1);
 	} else if (times.size() != num_samples) {
-		std::cout << "Allele frequencies for " << num_samples << " times but sample sizes for " << times.size() << " times" << std::endl;
+		std::cout << "Allele frequencies for " << num_samples << " times but sample times for " << times.size() << " times" << std::endl;
 		exit(1);
 	}
 	std::vector<double> initial_data(num_samples);

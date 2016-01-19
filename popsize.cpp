@@ -27,8 +27,7 @@ popsize::popsize(std::string pop_size_file) {
 	double curSize;
 	double curRate;
 	std::string curTime;
-	while (popFile.good()) {
-		getline(popFile, curLineString);
+	while (getline(popFile, curLineString)) {
 		std::istringstream curLine(curLineString);
 		curLine >> curSize >> curRate >> curTime;
 		sizes.push_back(curSize);
@@ -143,9 +142,9 @@ double popsize::getTau(double t) {
 }
 
 std::vector<double> popsize::getTau(const std::vector<double>& t_vec) {
-	std::vector<double> tau_vec;
+	std::vector<double> tau_vec(t_vec.size());
 	for (int i = 0; i < t_vec.size(); i++) {
-		tau_vec.push_back(getTau(t_vec[i]));
+		tau_vec[i] = getTau(t_vec[i]);
 	}
 	return tau_vec;
 }
