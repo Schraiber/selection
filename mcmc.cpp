@@ -41,6 +41,13 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	paramFile.open(paramName.c_str());
 	trajFile.open(trajName.c_str());
 	timeFile.open(timeName.c_str());
+    
+    //prepare output file
+    if (mySettings.get_infer_age()) {
+        paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\tage\tyt\ttuning.alpha1\ttuning.alpha2\ttuning.age\ttuning.yt" << std::endl;
+    } else {
+        paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\ty0\tyt\ttuning.alpha1\ttuning.alpha2\ttuning.y0\ttuning.yt" << std::endl;
+    }
 	
 	//initialize wfMeasure
 	wfMeasure* curWF = new wfMeasure(random,0);
@@ -66,9 +73,9 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		//curPath->print_time(std::cout);
 	}
 	
-	param_gamma* alpha1 = new param_gamma(50.0,random);
+	param_gamma* alpha1 = new param_gamma(25.0,random);
 	
-	param_gamma* alpha2 = new param_gamma(25.0,random);
+	param_gamma* alpha2 = new param_gamma(50.0,random);
 	
 	param_path* curParamPath = new param_path(curPath,alpha1,alpha2,random,mySettings);
 	
@@ -112,11 +119,6 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	
 	
 	//run mcmc
-	if (mySettings.get_infer_age()) {
-		paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\tage\tyt\ttuning.alpha1\ttuning.alpha2\ttuning.age\ttuning.yt" << std::endl;
-	} else {
-		paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\ty0\tyt\ttuning.alpha1\ttuning.alpha2\ttuning.y0\ttuning.yt" << std::endl;
-	}
 	for (gen = 0; gen < num_gen; gen++) {
 		
 		std::string state;
@@ -203,6 +205,19 @@ void mcmc::no_linked_sites(settings& mySettings) {
 //		double rel_to_CBP = testCBP.log_girsanov_wfwf_r(test_path, pars[0]->get(), pars[0]->getOld(), pars[1]->get(), pars[1]->getOld(), curPath->get_pop());
 //		std::cout << "Alpha1 = " << pars[0]->get() << ", Alpha2 = " << pars[0]->getOld() << ", h1 = " << pars[1]->get() << ", h2 = " << pars[1]->getOld() << " Log girsanov = " << rel_to_CBP << std::endl;
 //		std::cout << std::endl;
+//        std::cin.get();
+        
+//        for (int pos = 0; pos < curPath->get_length(); pos++) {
+//            if (curPath->get_traj(pos) < 0 || curPath->get_traj(pos) >= PI) {
+//                std::cout << "We have a bad path at generation " << gen << std::endl;
+//                std::cout << "Error is at position " << pos << " at time " << curPath->get_time(pos) << " and angle " << curPath->get_traj(pos) << std::endl;
+//                if (propRatio > -INFINITY) {
+//                    std::cout << "For some reason we have a finite prop ratio" << std::endl;
+//                    curPath->print();
+//                    exit(1);
+//                }
+//            }
+//        }
 		
 		double LLRatio = curlnL-oldlnL;
         if (curlnL != curlnL || oldlnL != oldlnL) {
@@ -291,16 +306,18 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		}
 				
 		//std::cout << gen << "\t" << curlnL << "\t" << pars[1]->get() << "\t" << curPath->get_traj(0) << "\t" << curPath->get_traj(curPath->get_length()-1) << std::endl;
-		
+        
 		if (gen % sampleFreq == 0) {
 			cbpMeasure testCBP(random);
 			double pathlnL = testCBP.log_girsanov_wf_r(curPath, pars[0]->get(), pars[1]->get(), curPath->get_pop(), 0);
 			paramFile << gen << "\t" << curlnL << "\t" << pathlnL << "\t" << pars[0]->get() << "\t" << pars[1]->get() << "\t" << pars[2]->get() << "\t" << curPath->get_traj(curPath->get_length()-1) << "\t" << pars[0]->getTuning() << "\t" << pars[1]->getTuning() << "\t" << pars[2]->getTuning() << "\t" << pars[3]->getTuning() <<  std::endl;
 			trajFile << gen << " ";
-			curPath->print_traj(trajFile);
+			curPath->print_traj(trajFile << std::setprecision(20));
 			timeFile << gen << " "; 
-			curPath->print_time(timeFile);
+			curPath->print_time(timeFile << std::setprecision(20));
 		}
+        //REMOVE THIS
+        //std::cin.get();
 	}
 	
 	

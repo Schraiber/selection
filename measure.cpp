@@ -181,6 +181,14 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 	if (dconts.size() > 2) {
 		//std::cout << "Crossing boundaries!" << std::endl;
 	}
+    
+    //brute force check that it's in the right space
+    //TODO: This shouldn't be necessary, since the loop below should take care of this...
+    for (i = 0; i < p->get_length(); i++) {
+        if (p->get_traj(i) < 0 || p->get_traj(i) >= PI) {
+            return -INFINITY;
+        }
+    }
 	
 	//the derivative time integral
 	double int_mderiv = 0;
@@ -192,16 +200,20 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 		i++;
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
-            if (p->get_traj(i) < 0 || p->get_traj(i) > PI) {
+            if (p->get_traj(i) < 0 || p->get_traj(i) >= PI) {
                 return -INFINITY; //Make sure the proposed path is stuck in the right space
             }
 			int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
+            //REMOVE THIS
+            //std::cerr << (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)) << " ";
 			i++;
 		}
 		//and the last little bit, where I need a left limit
 		int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
+        //REMOVE THIS
+        //std::cerr << (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)) << std::endl;
 		//then the "end" potential
 		Hm_wt += H_wf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, rho, 1);
 	}
@@ -214,11 +226,15 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 		while (p->get_time(i) < dconts[j+1]) {
 			int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
+            //REMOVE THIS
+            //std::cerr << (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)) << " ";
 			i++;
 		}
 		//and the last little bit, where I need a left limit
 		int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
+        //REMOVE THIS
+        //std::cerr << (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)) << std::endl;
 	}
 	
 	//compute the time integral of the time derivative
@@ -229,13 +245,19 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 		while (p->get_time(i) < dconts[j+1]) {
 			int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
+            //REMOVE THIS
+            //std::cerr << (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)) << " ";
 			i++;
 		}
 		//and the last little bit, where I need a left limit
 		int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
+        //REMOVE THIS
+        //std::cerr << (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)) << std::endl;
 	}
-	
+    //REMOVE THIS
+    //std::cout << "Hm_wt Hm_w0 int_mderiv int_msquare int_mtime\n";
+    //std::cout << Hm_wt << " " << Hm_w0 << " " << int_mderiv << " " << int_msquare << " " << int_mtime << std::endl;
 	
 	if (!is_bridge) {
 		return (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
@@ -261,7 +283,7 @@ double cbpMeasure::log_girsanov_wfwf(path* p, double alpha1, double alpha2) {
 	double int_mderiv = 0;
 	for (i = 1; i < path_len; i++) {
 		//also check if this thing is legal
-		if (p->get_traj(i) < 0 || p->get_traj(i) > PI) {
+		if (p->get_traj(i) < 0 || p->get_traj(i) >= PI) {
 			return -INFINITY;
 		}
 		//use trapezoid rule: average the values at t_i, t_{i-1}
