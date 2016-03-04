@@ -62,6 +62,14 @@ void path::print(std::ostream& o) {
 	o << std::endl;
 }
 
+void path::print_tsv(std::ostream& o) {
+	int i;
+	o << "trajectory\ttime" << std::endl ;
+	for (i = 0; i < trajectory.size(); i++) {
+		o << trajectory[i] << "\t" << time[i] << std::endl;
+	}
+}
+
 void path::print_traj(std::ostream& o) {
 	int i;
 	for (i = 0; i < trajectory.size(); i++) {

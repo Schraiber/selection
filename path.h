@@ -52,6 +52,7 @@ public:
 	
 	//I/O
 	void print(std::ostream& o = std::cout);
+	void print_tsv(std::ostream& o = std::cout);
 	virtual void print_traj(std::ostream& o = std::cout);
 	void print_time(std::ostream& o = std::cout);
 	

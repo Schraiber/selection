@@ -7,6 +7,12 @@ This software is written in C++ and requires the GNU scientific library to run. 
 ```
 g++ -O3 -lgsl *.cpp -o sr
 ```
+On some systems such as gcc, the order of arguments matters, in which case
+compiling with
+```
+g++ -O3 *.cpp -lgsl -lgslcblas -lm -o sr
+```
+may address linker errors.
 
 ## Generating allele frequency bridges
 
@@ -19,7 +25,8 @@ For example,
 ./sr -b 0.2,0.6,100,0.2 > myTraj.txt
 ```
 
-will output a trajectory for an allele with gamma = 100 going from a frequency of 0.2 to 0.6 in 0.2 diffusion time units into the file myTraj.txt. Trajectory files consist of two lines, the first being the allele frequency trajecotry and the second line being the time points.
+will output a trajectory for an allele with gamma = 100 going from a frequency of 0.2 to 0.6 in 0.2 diffusion time units into the file myTraj.txt. Trajectory files consist of two lines, the first being the allele frequency trajecotry and the second line being the time points.  
+A `-R` option causes `sr` to output the trajectory in tsv format.
 
 ## Inference from allele frequency time series
 
