@@ -26,7 +26,11 @@ int main (int argc, char * const argv[]) {
 		myWF.set_gamma(pars[2]);
 		path* myPath = new path(myWF.fisher(pars[0]),myWF.fisher(pars[1]),0,pars[3],&myWF,mySettings);
 		myWF.invert_path(myPath);
-		myPath->print(std::cout);
+		if (mySettings.get_output_tsv()) {
+			myPath->print_tsv(std::cout) ;
+		} else {
+			myPath->print(std::cout);
+		}
 		delete myPath;
 	} else if (mySettings.get_mcmc()) {
 		if (mySettings.get_linked()) {

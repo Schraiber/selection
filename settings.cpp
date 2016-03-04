@@ -35,7 +35,8 @@ settings::settings(int argc, char* const argv[]) {
 	fOrigin = 0.0;
 	infer_age = 0;
 	popFile = "";
-    mySeed = time(0);
+	mySeed = time(0);
+	output_tsv = 0;
 
 	//read the parameters
 	int ac = 1;
@@ -57,6 +58,10 @@ settings::settings(int argc, char* const argv[]) {
 				bridge = 1;
 				bridge_pars = argv[ac+1];
 				ac += 2;
+				break;
+			case 'R':
+				output_tsv = 1;
+				ac += 1;
 				break;
 			case 'p':
 				p = 1;
