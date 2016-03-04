@@ -7,6 +7,12 @@ This software is written in C++ and requires the GNU scientific library to run. 
 ```
 g++ -O3 -lgsl *.cpp -o sr
 ```
+On some systems such as gcc, the order of arguments matters, in which case
+compiling with
+```
+g++ -O3 *.cpp -lgsl -lgslcblas -lm -o sr
+```
+may address linker errors.
 
 ## Generating allele frequency bridges
 
