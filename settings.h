@@ -43,6 +43,7 @@ public:
 	double get_seed() {return mySeed;};
 	bool get_infer_age() {return infer_age;};
 	std::string get_popFile() {return popFile;};
+	bool get_output_tsv() {return output_tsv;};
 		
 	//parse things
 	std::vector<double> parse_bridge_pars();
@@ -70,6 +71,7 @@ private:
 	double mySeed; //for initializing mbRandom.
 	bool infer_age; //should we infer the allele age
 	std::string popFile;
+	int output_tsv; //whether to output -b in tsv format
 };
 
 
