@@ -44,6 +44,13 @@ public:
 	bool get_infer_age() {return infer_age;};
 	std::string get_popFile() {return popFile;};
 	bool get_output_tsv() {return output_tsv;};
+    double get_a1prop() {return a1prop;};
+    double get_a2prop() {return a2prop;};
+    double get_ageprop() {return ageprop;};
+    double get_endprop() {return endprop;};
+    double get_pathprop() {return pathprop;};
+    double get_a1start() {return a1start;};
+    double get_a2start() {return a2start;};
 		
 	//parse things
 	std::vector<double> parse_bridge_pars();
@@ -72,6 +79,13 @@ private:
 	bool infer_age; //should we infer the allele age
 	std::string popFile;
 	int output_tsv; //whether to output -b in tsv format
+    double a1prop;
+    double a2prop;
+    double ageprop;
+    double endprop;
+    double pathprop;
+    double a1start;
+    double a2start;
 };
 
 

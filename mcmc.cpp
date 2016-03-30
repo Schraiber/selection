@@ -73,9 +73,9 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		//curPath->print_time(std::cout);
 	}
 	
-	param_gamma* alpha1 = new param_gamma(25.0,random);
+	param_gamma* alpha1 = new param_gamma(mySettings.get_a1start(),random);
 	
-	param_gamma* alpha2 = new param_gamma(50.0,random);
+	param_gamma* alpha2 = new param_gamma(mySettings.get_a2start(),random);
 	
 	param_path* curParamPath = new param_path(curPath,alpha1,alpha2,random,mySettings);
 	
@@ -94,11 +94,11 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	//initialize the proposal ratios
 	//probably move this somewhere else
 	std::vector<double> propChance(0);
-	propChance.push_back(1); //update alpha1 1
-	propChance.push_back(1); //update alpha2 1
-	propChance.push_back(10); //update start/age 2
-	propChance.push_back(5); //update end 2
-	propChance.push_back(10); //update path 5
+	propChance.push_back(mySettings.get_a1prop()); //update alpha1 1
+	propChance.push_back(mySettings.get_a2prop()); //update alpha2 1
+	propChance.push_back(mySettings.get_ageprop()); //update start/age 2
+	propChance.push_back(mySettings.get_endprop()); //update end 2
+	propChance.push_back(mySettings.get_pathprop()); //update path 5
 //	propChance.push_back(.1); //gamma -> -gamma .1
 //	propChance.push_back(.1); //h -> h->1-h .1
 	//store as a cdf

@@ -37,6 +37,13 @@ settings::settings(int argc, char* const argv[]) {
 	popFile = "";
 	mySeed = time(0);
 	output_tsv = 0;
+    a1prop = 1.0;
+    a2prop = 1.0;
+    ageprop = 10.0;
+    endprop = 5.0;
+    pathprop = 10.0;
+    a1start = 25.0;
+    a2start = 50.0;
 
 	//read the parameters
 	int ac = 1;
@@ -124,6 +131,13 @@ settings::settings(int argc, char* const argv[]) {
 				popFile = argv[ac+1];
 				ac += 2;
 				break;
+            case '0':
+                a1prop = 0.0;
+                a2prop = 0.0;
+                a1start = 0.0;
+                a2start = 0.0;
+                ac += 1;
+                break;
 		}
 	}
 }
