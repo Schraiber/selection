@@ -37,7 +37,7 @@ The basic input for generating an inference of selection coefficients and allele
 3. Counts of the derived allele, in number of chromsoomes
 4. A population size history
 
-It's very important that you are consistent in setting the time scale between items 1 and 4. 
+It's very important that you are consistent in setting the time scale between items 1 and 4. On the basis of results from [Jewett et al (2016)](http://biorxiv.org/content/early/2016/04/12/048355.abstract), if no more detailed demography is known, I recommend picking N_0 by computing Waterson's or Tajima's estimators of theta and dividing through by 4 times an estimate of the mutation rate.
 
 The population size history is a 3-column white-space-separated file. Each line is one epoch of population size, which can be constant or exponential growth. For each epoch, each column is
 
