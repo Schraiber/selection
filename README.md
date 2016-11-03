@@ -55,6 +55,7 @@ The essential command line consists of the following flags
 -T comma separated list of sampling times
 -P path to population size history file
 -o output file prefix
+-a flag to indicate whether to infer allele age
 ```
 
 This will generate three output files:
