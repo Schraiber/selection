@@ -78,6 +78,10 @@ For instance, the following command line performs MCMC inference of an allele sa
 ./sr -X 0,0,2,11,17 -N 20,20,20,20,20 -T -0.6,-0.44994994994995,-0.2997997997998,-0.14964964964965,0 -n 500000 -d 0.001 -F 20 -f 1000 -s 100 -P constant.pop -e 8067 -a -o output
 ```
 
+## Not inferring allele age
+
+In some cases, it is not as desirable to infer the age of the allele, for example if your allele was ascertained due to being high frequency. In that case, adding inference of allele age will bias your results toward an inference of selection. To deal with this situation, we also have a mode that applies a uniform prior to the population allele frequency at the most ancient sampling time. This can be executed by simply **leaving off** the `-a` flag.
+
 ## Other flags that might be relevant
 
 ```
@@ -86,3 +90,7 @@ For instance, the following command line performs MCMC inference of an allele sa
 -t number of tests to calibrate rejection sampling algorithm
 -e random number seed
 ```
+
+## Analysis of output
+
+The file `path_utilities.r` has several functions that can be used to visualize output, and also simulate data. Of particularly interest is the function plot.posterior.paths which will make posterior path figures along the lines of Figure 6 in the paper describing the method,
