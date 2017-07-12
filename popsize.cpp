@@ -39,7 +39,6 @@ popsize::popsize(settings& s) {
 		if (curTime == "-Inf") {
 			times.push_back(-INFINITY);
 		} else {
-            
 			times.push_back(atof(curTime.c_str())/(g*2*N0));
 		}
 	}
@@ -61,7 +60,9 @@ popsize::popsize(settings& s) {
 		exit(1);
 	}
 	computeT();
-
+    for (int i = 0; i < sizes.size(); i++) {
+        std::cout << sizes[i] << " " << rates[i] << " " << times[i] << std::endl;
+    }
 }
 
 void popsize::computeT() {

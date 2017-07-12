@@ -224,9 +224,8 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 		std::cout << "ERROR: No population size history specified! Use -P option" << std::endl;
 		exit(1);
 	}
-	myPop = new popsize(s);
 	
-	std::vector<double> times = parse_comma_sep(t);
+
     if (s.get_set_gen() && !s.get_set_N0()) {
         std::cout << "Specified a generation time but not a base population size. Unless your times are measured in units of 2N0 years, this is likely an error" << std::endl;
     } else if (!s.get_set_gen() && s.get_set_N0()) {
@@ -237,7 +236,11 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
         std::cout << "Did not specify either generation time or base population size. Assuming times are in units of 2N0 generations" << std::endl;
     }
     
+    //make pop sizes
+    myPop = new popsize(s);
+    
     //convert times to units of 2N0
+    std::vector<double> times = parse_comma_sep(t);
     int g = s.get_gen_time();
     float N0 = s.get_N0();
     for (int i = 0; i < times.size(); i++) {
@@ -269,6 +272,10 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 			first_nonzero = i;
 		}
 	}
+    
+    for (int i = 0; i < sampleTimeValues.size(); i++) {
+        std::cout << sampleTimeValues[i] << " " << sampleSize[i] << " " << sampleCount[i] << std::endl;
+    }
 	
 	std::vector<double> breakPoints;
 	for (int i = 0; i < num_samples-1; i++) {
