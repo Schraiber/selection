@@ -8,6 +8,7 @@
  */
 
 #include "popsize.h"
+#include "settings.h"
 #include <math.h>
 #include <fstream>
 #include <iostream>
@@ -15,27 +16,31 @@
 
 
 
-popsize::popsize(std::string pop_size_file) {
+popsize::popsize(settings& s) {
 	sizes.resize(0);
 	sizes.push_back(0);
 	rates.resize(0);
 	rates.push_back(0);
 	times.resize(0);
 	times.push_back(0);
+    std::string pop_size_file = s.get_popFile();
 	std::ifstream popFile(pop_size_file.c_str());
 	std::string curLineString;
 	double curSize;
 	double curRate;
 	std::string curTime;
+    double g = s.get_gen_time();
+    double N0 = s.get_N0();
 	while (getline(popFile, curLineString)) {
 		std::istringstream curLine(curLineString);
 		curLine >> curSize >> curRate >> curTime;
-		sizes.push_back(curSize);
-		rates.push_back(curRate);
+		sizes.push_back(curSize/N0);
+		rates.push_back(curRate*2*N0);
 		if (curTime == "-Inf") {
 			times.push_back(-INFINITY);
 		} else {
-			times.push_back(atof(curTime.c_str()));
+            
+			times.push_back(atof(curTime.c_str())/(g*2*N0));
 		}
 	}
 	//check some things

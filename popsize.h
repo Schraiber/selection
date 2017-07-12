@@ -14,10 +14,12 @@
 #include <string>
 #include <stdlib.h>
 
+class settings;
+
 class popsize {
 public:
 	//constructor takes in a path to a population size file
-	popsize(std::string pop_size_file);
+	popsize(settings& s);
 	
 	//this gets the popsize at time t. Possibly the left limit
 	double getSize(double t, bool leftLim = 0);

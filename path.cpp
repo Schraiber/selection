@@ -224,7 +224,7 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 		std::cout << "ERROR: No population size history specified! Use -P option" << std::endl;
 		exit(1);
 	}
-	myPop = new popsize(s.get_popFile());
+	myPop = new popsize(s);
 	
 	std::vector<double> times = parse_comma_sep(t);
     if (s.get_set_gen() && !s.get_set_N0()) {
