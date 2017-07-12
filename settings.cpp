@@ -44,6 +44,10 @@ settings::settings(int argc, char* const argv[]) {
     pathprop = 10.0;
     a1start = 25.0;
     a2start = 50.0;
+    set_gen = 0;
+    set_N0 = 0;
+    gen_time = 1;
+    N0 = 0.5;
 
 	//read the parameters
 	int ac = 1;
@@ -131,6 +135,13 @@ settings::settings(int argc, char* const argv[]) {
 				popFile = argv[ac+1];
 				ac += 2;
 				break;
+            case 'G':
+                set_gen = 1;
+                gen_time = atoi(argv[ac+1]);
+                ac += 2;
+            case 'D': //TODO: FIX THIS
+                set_N0 = 1;
+                N0 = atoi(argv[ac+1]);
             case '0':
                 a1prop = 0.0;
                 a2prop = 0.0;

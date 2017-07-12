@@ -51,6 +51,10 @@ public:
     double get_pathprop() {return pathprop;};
     double get_a1start() {return a1start;};
     double get_a2start() {return a2start;};
+    bool get_set_gen() {return set_gen;};
+    bool get_set_N0() {return set_N0;};
+    int get_gen_time() {return gen_time;};
+    double get_N0() {return N0;};
 		
 	//parse things
 	std::vector<double> parse_bridge_pars();
@@ -86,6 +90,10 @@ private:
     double pathprop;
     double a1start;
     double a2start;
+    bool set_gen;
+    bool set_N0;
+    int gen_time;
+    double N0;
 };
 
 

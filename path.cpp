@@ -228,6 +228,15 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 	
 	std::vector<double> times = parse_comma_sep(t);
 	sampleTimeValues = times;
+    if (s.get_set_gen() && !s.get_set_N0()) {
+        std::cout << "Specified a generation time but not a base population size. Unless your times are measured in units of 2N0 years, this is likely an error" << std::endl;
+    } else if (!s.get_set_gen() && s.get_set_N0()) {
+        std::cout << "Specified base population size but not a generation time. Assuming times are measured in generations" << std::endl;
+    } else if (s.get_set_gen() && s.get_set_N0()) {
+        std::cout << "Specified both generation time and base population size. Converting all units to 2N0 generations" << std::endl;
+    } else {
+        std::cout << "Did not specify either generation time or base population size. Assuming times are in units of 2N0 generations" << std::endl;
+    }
 	sampleSize = parse_comma_sep(n);
 	sampleCount = parse_comma_sep(x);
 	//check that everything is the same
