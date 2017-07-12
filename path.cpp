@@ -227,7 +227,6 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 	myPop = new popsize(s.get_popFile());
 	
 	std::vector<double> times = parse_comma_sep(t);
-	sampleTimeValues = times;
     if (s.get_set_gen() && !s.get_set_N0()) {
         std::cout << "Specified a generation time but not a base population size. Unless your times are measured in units of 2N0 years, this is likely an error" << std::endl;
     } else if (!s.get_set_gen() && s.get_set_N0()) {
@@ -237,6 +236,15 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
     } else {
         std::cout << "Did not specify either generation time or base population size. Assuming times are in units of 2N0 generations" << std::endl;
     }
+    
+    //convert times to units of 2N0
+    int g = s.get_gen_time();
+    float N0 = s.get_N0();
+    for (int i = 0; i < times.size(); i++) {
+        times[i] /= (g*2*N0);
+    }
+        
+    sampleTimeValues = times;
 	sampleSize = parse_comma_sep(n);
 	sampleCount = parse_comma_sep(x);
 	//check that everything is the same
