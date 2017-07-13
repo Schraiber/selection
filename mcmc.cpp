@@ -90,7 +90,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	}
 	pars.push_back(new end_freq(curPath->get_traj(curPath->get_length()-1), random, curParamPath));
 	pars.push_back(curParamPath);
-		
+    
 	//initialize the proposal ratios
 	//probably move this somewhere else
 	std::vector<double> propChance(0);
@@ -115,8 +115,6 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	//compute starting lnL
 	//curlnL = compute_lnL(curPath, curWF, myWiener);
 	curlnL = compute_lnL_sample_only(curPath);
-
-	
 	
 	//run mcmc
 	for (gen = 0; gen < num_gen; gen++) {
@@ -131,93 +129,18 @@ void mcmc::no_linked_sites(settings& mySettings) {
 				break;
 			}
 		}
-		
-		
-		
-//		if (gen == 1271) {
-//			std::cout << "Start of gen" << std::endl;
-//			curPath->print_time();
-//		}
-        
-//        if (gen==215404) {
-//            std::cout << "Yo" << std::endl;
-//        }
-		
-        
-        for (int s=0; s<curPath->get_length(); s++) {
-            if (curPath->get_traj(s) < 0 || curPath->get_traj(s) > PI) {
-                std::cout << s << " " << curPath->get_traj(s) << std::endl;
-                exit(1);
-            }
-        }
-        
-		double oldPathlnL = 0;
-		if (curProp == 2) {
-			cbpMeasure testCBP(random);
-			oldPathlnL = testCBP.log_girsanov_wf_r(curPath, pars[0]->get(), pars[1]->get(), curPath->get_pop(),0);
-		}
-		
+                
 		if (curProp < 5) {
 			pars[curProp]->increaseProp();
 			propRatio = pars[curProp]->propose();
 			priorRatio = pars[curProp]->prior();
-		}
-
-		
-//		if (curProp == 5) {
-//			double curParVal = pars[0]->get();
-//			pars[0]->setOld(curParVal);
-//			pars[0]->setNew(-curParVal);
-//			propRatio = 0.0;
-//			priorRatio = pars[0]->prior();
-//		}
-//		
-//		if (curProp == 6) {
-//			double curParVal = pars[1]->get();
-//			pars[1]->setOld(curParVal);
-//			pars[1]->setNew(1-curParVal);
-//			propRatio = 0.0;
-//			priorRatio = pars[1]->prior();
-//		}
-		
-//		if (gen > 50) {
-//			std::cout << "Test path" << std::endl;
-//			curPath->print_time();
-//			std::cout << "Cur first_nonzero index and time" << std::endl;
-//			std::cout << ((wfSamplePath*)curPath)->get_sampleTime(((wfSamplePath*)curPath)->get_firstNonzero());
-//			std::cout << " " << curPath->get_time(((wfSamplePath*)curPath)->get_sampleTime(((wfSamplePath*)curPath)->get_firstNonzero())) << std::endl;
-//		}
+        }
 			
 		oldWF = curWF;
 		curWF = new wfMeasure(random,pars[0]->get());
 		oldlnL = curlnL;
-//		curlnL = compute_lnL(curPath, curWF, myWiener);
 		curlnL = compute_lnL_sample_only(curPath);
 
-//		if (gen == 1080) {
-//			std::cout << "Test age: " << pars[1]->get() << std::endl;
-//		}
-		
-//		cbpMeasure testCBP(random);
-//		path* test_path = curPath->extract_path(200,curPath->get_length());
-//		test_path->print_time(std::cout << std::setprecision(9));
-//		test_path->print_traj();
-//		double rel_to_CBP = testCBP.log_girsanov_wfwf_r(test_path, pars[0]->get(), pars[0]->getOld(), pars[1]->get(), pars[1]->getOld(), curPath->get_pop());
-//		std::cout << "Alpha1 = " << pars[0]->get() << ", Alpha2 = " << pars[0]->getOld() << ", h1 = " << pars[1]->get() << ", h2 = " << pars[1]->getOld() << " Log girsanov = " << rel_to_CBP << std::endl;
-//		std::cout << std::endl;
-//        std::cin.get();
-        
-//        for (int pos = 0; pos < curPath->get_length(); pos++) {
-//            if (curPath->get_traj(pos) < 0 || curPath->get_traj(pos) >= PI) {
-//                std::cout << "We have a bad path at generation " << gen << std::endl;
-//                std::cout << "Error is at position " << pos << " at time " << curPath->get_time(pos) << " and angle " << curPath->get_traj(pos) << std::endl;
-//                if (propRatio > -INFINITY) {
-//                    std::cout << "For some reason we have a finite prop ratio" << std::endl;
-//                    curPath->print();
-//                    exit(1);
-//                }
-//            }
-//        }
 		
 		double LLRatio = curlnL-oldlnL;
         if (curlnL != curlnL || oldlnL != oldlnL) {
@@ -239,12 +162,6 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		
 		if (log(u) < mh) {
 			//accept
-//			if (curProp==2) {
-//				cbpMeasure testCBP(random);
-//				double newPathlnL = testCBP.log_girsanov_wf_r(curPath, pars[0]->get(), pars[1]->get(), curPath->get_pop(),0);
-//				double pathlnLRatio = newPathlnL - oldPathlnL;
-//				std::cerr << pars[2]->getOld() << " " << pars[2]->get() << " " << LLRatio << " " << pathlnLRatio << " " << propRatio << " " << priorRatio << " " << mh << " A" << std::endl;
-//			}
 			if (curProp < 4) {
 				pars[curProp]->increaseAccept();
 			}
@@ -254,26 +171,12 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			state = "Accept";
 		} else {
 			//reject
-//			if (curProp==2) {
-//				cbpMeasure testCBP(random);
-//				double newPathlnL = testCBP.log_girsanov_wf_r(curPath, pars[0]->get(), pars[1]->get(), curPath->get_pop(),0);
-//				double pathlnLRatio = newPathlnL - oldPathlnL;
-//				std::cerr << pars[2]->getOld() << " " << pars[2]->get() << " " <<  LLRatio << " " << pathlnLRatio << " " << propRatio << " " << priorRatio << " " << mh << " R" << std::endl;
-//			}
 			if (curProp < 4) {
 				pars[curProp]->reset();
 			}
 			curPath->reset();
 			curPath->set_update_begin(0);
 			curPath->set_old_index(-1);
-			
-//			if (gen > 50) {
-//				std::cout << "After resetting" << std::endl;
-//				curPath->print_time();
-//				std::cout << "Cur first_nonzero index and time" << std::endl;
-//				std::cout << ((wfSamplePath*)curPath)->get_sampleTime(((wfSamplePath*)curPath)->get_firstNonzero());
-//				std::cout << " " << curPath->get_time(((wfSamplePath*)curPath)->get_sampleTime(((wfSamplePath*)curPath)->get_firstNonzero())) << std::endl;
-//			}
 			
 			delete curWF;
 			curWF = oldWF;

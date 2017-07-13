@@ -70,7 +70,7 @@ double start_freq::propose() {
 	curVal = random->truncatedNormalRv(0, PI, oldVal, tuning);
 	double propRatio = random->truncatedNormalPdf(0, PI, curVal, tuning, oldVal);
 	propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
-	propRatio += curParamPath->proposeStart(curVal);
+    propRatio += curParamPath->proposeStart(curVal);
 	return propRatio;
 }
 

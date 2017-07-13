@@ -139,9 +139,12 @@ settings::settings(int argc, char* const argv[]) {
                 set_gen = 1;
                 gen_time = atoi(argv[ac+1]);
                 ac += 2;
-            case 'D': //TODO: FIX THIS
+                break;
+            case 'D': //TODO: COME UP WITH DIFFERENT COMMAND
                 set_N0 = 1;
                 N0 = atoi(argv[ac+1]);
+                ac += 2;
+                break;
             case '0':
                 a1prop = 0.0;
                 a2prop = 0.0;

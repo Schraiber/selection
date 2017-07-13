@@ -34,7 +34,10 @@ popsize::popsize(settings& s) {
 	while (getline(popFile, curLineString)) {
 		std::istringstream curLine(curLineString);
 		curLine >> curSize >> curRate >> curTime;
-		sizes.push_back(curSize/N0);
+        if (s.get_set_N0()) {
+            curSize /= N0;
+        }
+		sizes.push_back(curSize);
 		rates.push_back(curRate*2*N0);
 		if (curTime == "-Inf") {
 			times.push_back(-INFINITY);
@@ -60,9 +63,6 @@ popsize::popsize(settings& s) {
 		exit(1);
 	}
 	computeT();
-    for (int i = 0; i < sizes.size(); i++) {
-        std::cout << sizes[i] << " " << rates[i] << " " << times[i] << std::endl;
-    }
 }
 
 void popsize::computeT() {

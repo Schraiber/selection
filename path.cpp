@@ -259,6 +259,19 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 		std::cout << "Allele frequencies for " << num_samples << " times but sample times for " << times.size() << " times" << std::endl;
 		exit(1);
 	}
+    
+    //check that sample times are from MOST ANCIENT to MOST RECENT
+    for (int i = 0; i < sampleTimeValues.size(); i++) {
+        if (sampleTimeValues[i] > 0) {
+            std::cout << "Sample times aren't in the past. You should make sure to add a negative sign" << std::endl;
+            exit(1);
+        }
+        if (sampleTimeValues[i] > sampleTimeValues[i+1]) {
+            std::cout << "Sample times are not ordered from MOST ANCIENT to MOST RECENT" << std::endl;
+            exit(1);
+        }
+    }
+    
 	std::vector<double> initial_data(num_samples);
 	first_nonzero = -1;
 	for (int i = 0; i < num_samples; i++) {
@@ -272,10 +285,6 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 			first_nonzero = i;
 		}
 	}
-    
-    for (int i = 0; i < sampleTimeValues.size(); i++) {
-        std::cout << sampleTimeValues[i] << " " << sampleSize[i] << " " << sampleCount[i] << std::endl;
-    }
 	
 	std::vector<double> breakPoints;
 	for (int i = 0; i < num_samples-1; i++) {
