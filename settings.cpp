@@ -35,6 +35,7 @@ settings::settings(int argc, char* const argv[]) {
 	fOrigin = 0.0;
 	infer_age = 0;
 	popFile = "";
+    inFile = "";
 	mySeed = time(0);
 	output_tsv = 0;
     a1prop = 1.0;
@@ -151,6 +152,11 @@ settings::settings(int argc, char* const argv[]) {
                 a1start = 0.0;
                 a2start = 0.0;
                 ac += 1;
+                break;
+            case 'I':
+                mcmc = 1;
+                inFile = argv[ac+1];
+                ac += 2;
                 break;
 		}
 	}

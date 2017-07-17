@@ -55,6 +55,7 @@ public:
     bool get_set_N0() {return set_N0;};
     int get_gen_time() {return gen_time;};
     double get_N0() {return N0;};
+    std::string get_infile() {return inFile;};
 		
 	//parse things
 	std::vector<double> parse_bridge_pars();
@@ -94,6 +95,7 @@ private:
     bool set_N0;
     int gen_time;
     double N0;
+    std::string inFile;
 };
 
 

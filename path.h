@@ -11,6 +11,7 @@
 #define path_H
 
 #include <vector>
+#include <string>
 #include <iostream>
 #include "math.h"
 
@@ -126,7 +127,10 @@ private:
 	int first_nonzero; //the first sample time where there are more than 0 copies of the derived allele
 	
 	//parses comma separated list of parameters
-	std::vector<double> parse_comma_sep(char* c); 
+	std::vector<double> parse_comma_sep(char* c);
+    
+    //parses input file
+    void parse_input_file(std::string fin, int g, double N0);
 	
 	//the population size history
 	popsize* myPop;

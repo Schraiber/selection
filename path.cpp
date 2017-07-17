@@ -17,6 +17,8 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <fstream>
+#include <iostream>
 
 //builds a bridge from x0 to xt 
 path::path(double x0, double xt, double t0, double t, measure* m, settings& s) {
@@ -178,6 +180,39 @@ std::vector<double> wfSamplePath::parse_comma_sep(char* c) {
 	return pars;
 }
 
+void wfSamplePath::parse_input_file(std::string fin, int g, double N0) {
+    std::ifstream inFile(fin.c_str());
+    std::string curLineString;
+    int curCount;
+    int curSS;
+    double curLowTime;
+    double curHighTime;
+    double curTime;
+    while (getline(inFile, curLineString)) {
+        std::istringstream curLine(curLineString);
+        curLine >> curCount >> curSS >> curLowTime >> curHighTime;
+        if (curCount < 0 || curCount > curSS) {
+            std::cout << "Allele count is not between 0 and sample size: X = " << curCount << ", SS = " << curSS << std::endl;
+            exit(1);
+        }
+        if (curLowTime > curHighTime) {
+            std::cout << "Low end of time range higher than high end: t_low = " << curLowTime << ", t_high = " << curHighTime << std::endl;
+            exit(1);
+        }
+        if (curLowTime == curHighTime) {
+            //Time is not uncertain
+            curTime = curLowTime/(g*2*N0);
+        } else {
+            //not implemented yet so just exit
+            std::cout << "Uncertainty in sample age not yet implemented, so just setting to mean" << std::endl;
+            curTime = (curLowTime+curHighTime)/2.0/(g*2*N0);
+        }
+        sampleTimeValues.push_back(curTime);
+        sampleSize.push_back(curSS);
+        sampleCount.push_back(curCount);
+    }
+}
+
 double wfSamplePath::sampleProb(int i) {
 	int cur_index = sampleTime[i];
 	double sp = 0;
@@ -239,24 +274,29 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
     //make pop sizes
     myPop = new popsize(s);
     
-    //convert times to units of 2N0
-    std::vector<double> times = parse_comma_sep(t);
-    int g = s.get_gen_time();
-    float N0 = s.get_N0();
-    for (int i = 0; i < times.size(); i++) {
-        times[i] /= (g*2*N0);
-    }
+    if (s.get_infile() == "") {
+        //convert times to units of 2N0
+        std::vector<double> times = parse_comma_sep(t);
+        int g = s.get_gen_time();
+        float N0 = s.get_N0();
+        for (int i = 0; i < times.size(); i++) {
+            times[i] /= (g*2*N0);
+        }
         
-    sampleTimeValues = times;
-	sampleSize = parse_comma_sep(n);
-	sampleCount = parse_comma_sep(x);
+        sampleTimeValues = times;
+        sampleSize = parse_comma_sep(n);
+        sampleCount = parse_comma_sep(x);
+    } else {
+        parse_input_file(s.get_infile(), s.get_gen_time(), s.get_N0());
+    }
+    
 	//check that everything is the same
 	int num_samples = sampleCount.size();
 	if (sampleSize.size() != num_samples) {
 		std::cout << "Allele frequencies for " << num_samples << " times but sample sizes for " << sampleSize.size() << " times" << std::endl;
 		exit(1);
-	} else if (times.size() != num_samples) {
-		std::cout << "Allele frequencies for " << num_samples << " times but sample times for " << times.size() << " times" << std::endl;
+	} else if (sampleTimeValues.size() != num_samples) {
+		std::cout << "Allele frequencies for " << num_samples << " times but sample times for " << sampleTimeValues.size() << " times" << std::endl;
 		exit(1);
 	}
     
@@ -288,12 +328,12 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 	
 	std::vector<double> breakPoints;
 	for (int i = 0; i < num_samples-1; i++) {
-		std::vector<double> curBreaks = myPop->getBreakTimes(times[i],times[i+1]);
+		std::vector<double> curBreaks = myPop->getBreakTimes(sampleTimeValues[i],sampleTimeValues[i+1]);
 		for (int j = 0; j < curBreaks.size()-1; j++) {
 			breakPoints.push_back(curBreaks[j]);
 		}
 	}
-	breakPoints.push_back(times[times.size()-1]);
+	breakPoints.push_back(sampleTimeValues[sampleTimeValues.size()-1]);
 	
 	
 	//create the time vector
@@ -325,7 +365,7 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 			cur_end_ind++;
 		}
 		time_vec[time_vec.size()-1] = curEnd;
-		if (curEnd == times[curTimeInd]) {
+		if (curEnd == sampleTimeValues[curTimeInd]) {
 			nextPath = new path(wf->fisher(initial_data[curBreakStart]), wf->fisher(initial_data[curBreakStart+1]), time_vec[0], time_vec[time_vec.size()-1], wf, time_vec);
 			if (curBreakStart == 0) {
 				this->append(nextPath);
