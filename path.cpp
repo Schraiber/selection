@@ -275,17 +275,8 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
     myPop = new popsize(s);
     
     if (s.get_infile() == "") {
-        //convert times to units of 2N0
-        std::vector<double> times = parse_comma_sep(t);
-        int g = s.get_gen_time();
-        float N0 = s.get_N0();
-        for (int i = 0; i < times.size(); i++) {
-            times[i] /= (g*2*N0);
-        }
-        
-        sampleTimeValues = times;
-        sampleSize = parse_comma_sep(n);
-        sampleCount = parse_comma_sep(x);
+        std::cout << "No input data specified!" << std::endl;
+        exit(1);
     } else {
         parse_input_file(s.get_infile(), s.get_gen_time(), s.get_N0());
     }

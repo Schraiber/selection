@@ -87,20 +87,7 @@ settings::settings(int argc, char* const argv[]) {
 				rescale = atof(argv[ac+1]);
 				ac += 2;
 				break;
-			case 'X':
-				mcmc = 1;
-				sample_freq = argv[ac+1];
-				ac += 2;
-				break;
-			case 'N':
-				sample_size = argv[ac+1];
-				ac += 2;
-				break;
-			case 'T':
-				sample_time = argv[ac+1];
-				ac += 2;
-				break;
-			case 'f':
+            case 'f':
 				printFreq = atoi(argv[ac+1]);
 				ac += 2;
 				break;
@@ -141,7 +128,7 @@ settings::settings(int argc, char* const argv[]) {
                 gen_time = atoi(argv[ac+1]);
                 ac += 2;
                 break;
-            case 'D': //TODO: COME UP WITH DIFFERENT COMMAND
+            case 'N': //TODO: COME UP WITH DIFFERENT COMMAND
                 set_N0 = 1;
                 N0 = atoi(argv[ac+1]);
                 ac += 2;
@@ -153,7 +140,7 @@ settings::settings(int argc, char* const argv[]) {
                 a2start = 0.0;
                 ac += 1;
                 break;
-            case 'I':
+            case 'D':
                 mcmc = 1;
                 inFile = argv[ac+1];
                 ac += 2;
