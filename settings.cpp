@@ -128,7 +128,7 @@ settings::settings(int argc, char* const argv[]) {
                 gen_time = atoi(argv[ac+1]);
                 ac += 2;
                 break;
-            case 'N': //TODO: COME UP WITH DIFFERENT COMMAND
+            case 'N':
                 set_N0 = 1;
                 N0 = atoi(argv[ac+1]);
                 ac += 2;

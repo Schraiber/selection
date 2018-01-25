@@ -226,6 +226,16 @@ void wfSamplePath::parse_input_file(std::string fin, int g, double N0) {
         sampleCount.push_back(curCount);
     }
     
+    //Check that everything has the same size
+    int num_samples = sampleCount.size();
+    if (sampleSize.size() != num_samples) {
+        std::cout << "Allele frequencies for " << num_samples << " times but sample sizes for " << sampleSize.size() << " times" << std::endl;
+        exit(1);
+    } else if (sampleTimeValues.size() != num_samples) {
+        std::cout << "Allele frequencies for " << num_samples << " times but sample times for " << sampleTimeValues.size() << " times" << std::endl;
+        exit(1);
+    }
+    
     //Sort so that samples are in order by mean
     std::vector<int> index = orderTimeIndex();
     sampleTimeValues = sortByIndex(sampleTimeValues, index);
@@ -284,9 +294,6 @@ void wfSamplePath::print_traj(std::ostream& o) {
 }
 
 wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
-	char* x = s.get_sample_freq();
-	char* n = s.get_sample_size();
-	char* t = s.get_sample_time();
 	
 	sampleSize.resize(0);
 	sampleCount.resize(0);
@@ -311,6 +318,7 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
     //make pop sizes
     myPop = new popsize(s);
     
+    //Make input data
     if (s.get_infile() == "") {
         std::cout << "No input data specified!" << std::endl;
         exit(1);
@@ -318,28 +326,8 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
         parse_input_file(s.get_infile(), s.get_gen_time(), s.get_N0());
     }
     
-	//check that everything is the same
-	int num_samples = sampleCount.size();
-	if (sampleSize.size() != num_samples) {
-		std::cout << "Allele frequencies for " << num_samples << " times but sample sizes for " << sampleSize.size() << " times" << std::endl;
-		exit(1);
-	} else if (sampleTimeValues.size() != num_samples) {
-		std::cout << "Allele frequencies for " << num_samples << " times but sample times for " << sampleTimeValues.size() << " times" << std::endl;
-		exit(1);
-	}
-    
-    //check that sample times are from MOST ANCIENT to MOST RECENT
-    for (int i = 0; i < sampleTimeValues.size(); i++) {
-        if (sampleTimeValues[i] > 0) {
-            std::cout << "Sample times aren't in the past. You should make sure to add a negative sign" << std::endl;
-            exit(1);
-        }
-        if (sampleTimeValues[i] > sampleTimeValues[i+1]) {
-            std::cout << "Sample times are not ordered from MOST ANCIENT to MOST RECENT" << std::endl;
-            exit(1);
-        }
-    }
-    
+    //Initialize path
+    int num_samples = sampleCount.size();
 	std::vector<double> initial_data(num_samples);
 	first_nonzero = -1;
 	for (int i = 0; i < num_samples; i++) {
