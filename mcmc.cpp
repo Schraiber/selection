@@ -52,11 +52,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	//initialize wfMeasure
 	wfMeasure* curWF = new wfMeasure(random,0);
 	wfMeasure* oldWF = NULL;
-	curWF->set_num_test(mySettings.get_num_test());	
-	
-	//initialize helper measures
-	wienerMeasure* myWiener = new wienerMeasure(random);
-	measure* myCBP; //this way can decide to flip or not during the mcmc
+	curWF->set_num_test(mySettings.get_num_test());
 		
 	//propose initial sample path between the sampled points
 	wfSamplePath* curPath = new wfSamplePath(mySettings,curWF);

@@ -19,6 +19,18 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
+
+struct compare_index
+{
+    const std::vector<double> base_arr;
+    compare_index (const std::vector<double> &arr) : base_arr (arr) {}
+    
+    bool operator () (int a, int b) const
+    {
+        return (base_arr[a] < base_arr[b]);
+    }
+};
 
 //builds a bridge from x0 to xt 
 path::path(double x0, double xt, double t0, double t, measure* m, settings& s) {
@@ -181,6 +193,7 @@ std::vector<double> wfSamplePath::parse_comma_sep(char* c) {
 }
 
 void wfSamplePath::parse_input_file(std::string fin, int g, double N0) {
+    std::cout << "Parsing input" << std::endl;
     std::ifstream inFile(fin.c_str());
     std::string curLineString;
     int curCount;
@@ -203,7 +216,7 @@ void wfSamplePath::parse_input_file(std::string fin, int g, double N0) {
             //Time is not uncertain
             curTime = curLowTime/(g*2*N0);
         } else {
-            //not implemented yet so just exit
+            //Set the sample time to mean to initialize
             std::cout << "Uncertainty in sample age not yet implemented, so just setting to mean" << std::endl;
             curTime = (curLowTime+curHighTime)/2.0/(g*2*N0);
         }
@@ -211,6 +224,38 @@ void wfSamplePath::parse_input_file(std::string fin, int g, double N0) {
         sampleSize.push_back(curSS);
         sampleCount.push_back(curCount);
     }
+    //Sort so that samples are in order by mean
+    std::cout << "Original vectors" << std::endl;
+    for (int i = 0; i < sampleTimeValues.size(); i++) {
+        std::cout << sampleTimeValues[i] << " " << sampleSize[i] << " " << sampleCount[i] << std::endl;
+    }
+    
+    std::vector<int> index = orderTimeIndex();
+    sampleTimeValues = sortByIndex(sampleTimeValues, index);
+    sampleSize = sortByIndex(sampleSize, index);
+    sampleCount = sortByIndex(sampleCount, index);
+    std::cout << "New vectors" << std::endl;
+    for (int i = 0; i < sampleTimeValues.size(); i++) {
+        std::cout << sampleTimeValues[i] << " " << sampleSize[i] << " " << sampleCount[i] << std::endl;
+    }
+    exit(1);
+}
+
+std::vector<int> wfSamplePath::orderTimeIndex() {
+    std::vector<int> index(sampleTimeValues.size());
+    for (int i = 0; i < sampleTimeValues.size(); i++) {
+        index[i] = i;
+    };
+    std::sort(index.begin(), index.end(), compare_index(sampleTimeValues));
+    return index;
+}
+
+std::vector<double> wfSamplePath::sortByIndex(std::vector<double>& vec, std::vector<int> index) {
+    std::vector<double> temp_vec(index.size());
+    for (int i = 0; i < index.size(); i++) {
+        temp_vec[i] = vec[index[i]];
+    }
+    return temp_vec;
 }
 
 double wfSamplePath::sampleProb(int i) {
@@ -264,9 +309,9 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
     if (s.get_set_gen() && !s.get_set_N0()) {
         std::cout << "Specified a generation time but not a base population size. Unless your times are measured in units of 2N0 years, this is likely an error" << std::endl;
     } else if (!s.get_set_gen() && s.get_set_N0()) {
-        std::cout << "Specified base population size but not a generation time. Assuming times are measured in generations" << std::endl;
+        std::cout << "Specified base population size but not a generation time. Assuming times are measured in generations, converting all units to 2N0 generations" << std::endl;
     } else if (s.get_set_gen() && s.get_set_N0()) {
-        std::cout << "Specified both generation time and base population size. Converting all units to 2N0 generations" << std::endl;
+        std::cout << "Specified both generation time and base population size. Assuming times are measured in years, converting all units to 2N0 generations" << std::endl;
     } else {
         std::cout << "Did not specify either generation time or base population size. Assuming times are in units of 2N0 generations" << std::endl;
     }

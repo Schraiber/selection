@@ -115,6 +115,8 @@ private:
 	//relevant to the sample
 	std::vector<int> sampleTime; //stores the INDICES of the time samples of the path (if == -1, then allele didn't exist!)
 	std::vector<double> sampleTimeValues; //stores the actual times of the samples
+    std::vector<double> lowerTimeValues; //the lower limits of the sample times
+    std::vector<double> upperTimeValues; //the upper limit of hte sample times
 	std::vector<double> sampleSize; //stores the sample sizes at the time samples of the path
 	std::vector<double> sampleCount; //stores the sample count of the favored allele at the time samples of the path
 	
@@ -131,6 +133,11 @@ private:
     
     //parses input file
     void parse_input_file(std::string fin, int g, double N0);
+    
+    //for sorting input
+    std::vector<int> orderTimeIndex();
+    std::vector<double> sortByIndex(std::vector<double>& vec, std::vector<int> index);
+    
 	
 	//the population size history
 	popsize* myPop;
