@@ -201,6 +201,7 @@ void wfSamplePath::parse_input_file(std::string fin, int g, double N0) {
     double curLowTime;
     double curHighTime;
     double curTime;
+    
     while (getline(inFile, curLineString)) {
         std::istringstream curLine(curLineString);
         curLine >> curCount >> curSS >> curLowTime >> curHighTime;
@@ -224,21 +225,12 @@ void wfSamplePath::parse_input_file(std::string fin, int g, double N0) {
         sampleSize.push_back(curSS);
         sampleCount.push_back(curCount);
     }
-    //Sort so that samples are in order by mean
-    std::cout << "Original vectors" << std::endl;
-    for (int i = 0; i < sampleTimeValues.size(); i++) {
-        std::cout << sampleTimeValues[i] << " " << sampleSize[i] << " " << sampleCount[i] << std::endl;
-    }
     
+    //Sort so that samples are in order by mean
     std::vector<int> index = orderTimeIndex();
     sampleTimeValues = sortByIndex(sampleTimeValues, index);
     sampleSize = sortByIndex(sampleSize, index);
     sampleCount = sortByIndex(sampleCount, index);
-    std::cout << "New vectors" << std::endl;
-    for (int i = 0; i < sampleTimeValues.size(); i++) {
-        std::cout << sampleTimeValues[i] << " " << sampleSize[i] << " " << sampleCount[i] << std::endl;
-    }
-    exit(1);
 }
 
 std::vector<int> wfSamplePath::orderTimeIndex() {
