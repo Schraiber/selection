@@ -178,6 +178,7 @@ generate_sample_data = function(n,sample_times,sample_sizes, a,t_1,t_2,gamma,h,t
 	}
 	freq = sample_counts/sample_sizes
 	return(list(counts=sample_counts,sizes=sample_sizes,times=sample_times,paths=paths,freq=freq))
+}
 	
 
 #Generate a command string from a list of sims
@@ -302,13 +303,22 @@ dmudx_wf_diploid_bes0 = function(x,gam,h) {
 
 #Likelihood of transformed Wright-Fisher path with two different selection coefficients
 girsanov_wfwf = function(path,t_vec, alpha1, alpha2, h1, h2) {
-	m1 = H_wf_diploid(path[length(path)],alpha1,h1) - H_wf_diploid(path[1],alpha1,h1)-1/2*riemann_integral(dmudx_wf_diploid(path,alpha1,h1),t_vec)-1/2*riemann_integral(mu_wf_diploid(path,alpha1,h1)^2,t_vec)
-	m2 = H_wf_diploid(path[length(path)],alpha2,h2) - H_wf_diploid(path[1],alpha2,h2)-1/2*riemann_integral(dmudx_wf_diploid(path,alpha2,h2),t_vec)-1/2*riemann_integral(mu_wf_diploid(path,alpha2,h2)^2,t_vec)
+	m1 = H_wf_diploid(path[length(path)],alpha1,h1) - 
+		H_wf_diploid(path[1],alpha1,h1) -
+		1/2*riemann_integral(dmudx_wf_diploid(path,alpha1,h1),t_vec) -
+		1/2*riemann_integral(mu_wf_diploid(path,alpha1,h1)^2,t_vec)
+	m2 = H_wf_diploid(path[length(path)],alpha2,h2) -
+		H_wf_diploid(path[1],alpha2,h2) -
+		1/2*riemann_integral(dmudx_wf_diploid(path,alpha2,h2),t_vec) -
+		1/2*riemann_integral(mu_wf_diploid(path,alpha2,h2)^2,t_vec)
 	return(m1-m2)
 }
 
 #Likelihood of Wright-Fisher path relative to Bes(0)
 girsanov_wfbes0_limit = function(path,t_vec,alpha,h) {
-	m1 = H_wf_diploid_bes0(path[length(path)],alpha,h) - H_wf_diploid_bes0(path[1],alpha,h)-1/2*riemann_integral(dmudx_wf_diploid_bes0(path,alpha,h),t_vec)-1/2*riemann_integral(mu_squared_wf_diploid_bes0(path,alpha,h),t_vec)
+	m1 = H_wf_diploid_bes0(path[length(path)],alpha,h) - 
+		H_wf_diploid_bes0(path[1],alpha,h) - 
+		1/2*riemann_integral(dmudx_wf_diploid_bes0(path,alpha,h),t_vec) - 
+		1/2*riemann_integral(mu_squared_wf_diploid_bes0(path,alpha,h),t_vec)
 	return(m1)
 }
