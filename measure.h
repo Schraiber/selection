@@ -7,6 +7,8 @@
  *
  */
 
+#pragma once
+
 #ifndef measure_H
 #define measure_H
 

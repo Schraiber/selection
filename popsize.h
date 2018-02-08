@@ -7,6 +7,8 @@
  *
  */
 
+#pragma once
+
 #ifndef popsize_H
 #define popsize_H
 

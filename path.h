@@ -7,6 +7,8 @@
  *
  */
 
+#pragma once
+
 #ifndef path_H
 #define path_H
 
@@ -75,7 +77,7 @@ protected:
 class wfSamplePath : public path {
 public:
 	//constructor
-	wfSamplePath(std::vector<double> p, std::vector<double> t) : path(p,t) {sampleTime.resize(0); sampleSize.resize(0); sampleCount.resize(0);};
+    wfSamplePath(std::vector<double> p, std::vector<double> t) : path(p,t) {sample_time_vec.resize(0);};
 	wfSamplePath(settings& s, wfMeasure* wf); //initializes a path from sample info, NB: does not propose the beginning!
     wfSamplePath(std::vector<sample_time*>& times, popsize* myPop, wfMeasure* wf, settings& s); //same as previous, but breaks out the parsing
 	
@@ -83,18 +85,14 @@ public:
 	~wfSamplePath();
 	
 	//access sample aspects
-	int get_num_samples() {return sampleTime.size();};
-	int get_sampleTime(int i) {return sampleTime[i];}; //NOTE: RETURNS AN INDEX!
-	double get_sampleSize(int i) {return sampleSize[i];};
-	double get_sampleCount(int i) {return sampleCount[i];};
-	double get_sampleFreq(int i) {return (1.0-cos(trajectory[sampleTime[i]]))/2.0;};
-	double get_firstNonzero() {return first_nonzero;};
-	double get_sampleTimeValue(int i) {return sampleTimeValues[i];};
-	
-	//set sample aspects
-	void set_sampleTime(int i, int j) {sampleTime[i] = j;}; //NOTE: SETS AN INDEX!
-	void set_sampleSize(int i, double n) {sampleSize[i] = n;};
-	void set_sampleCount(int i, double x) {sampleCount[i] = x;};
+	int get_num_samples() {return sample_time_vec.size();};
+	int get_sampleTime(int i); //NOTE: RETURNS AN INDEX!
+	double get_sampleSize(int i);
+	double get_sampleCount(int i);
+	double get_sampleFreq(int i);
+	double get_firstNonzero();
+    double get_sampleTimeValue(int i);
+
 	
 	//for allele age stuff
 	void set_allele_age(double a, path* p, int i); //this should set the allele age, prepend the new path starting at CURRENT i, and fix up sampleTime. 
@@ -115,10 +113,7 @@ public:
 	
 private:
 	//relevant to the sample
-	std::vector<int> sampleTime; //stores the INDICES of the time samples of the path (if == -1, then allele didn't exist!)
-	std::vector<double> sampleTimeValues; //stores the actual times of the samples
-	std::vector<double> sampleSize; //stores the sample sizes at the time samples of the path
-	std::vector<double> sampleCount; //stores the sample count of the favored allele at the time samples of the path
+    std::vector<sample_time*> sample_time_vec;
 	
 	//relevant to allele age
 	double allele_age; //the age itself

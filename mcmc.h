@@ -7,6 +7,8 @@
  *
  */
 
+#pragma once
+
 class wfSamplePath;
 class measure;
 class wienerMeasure;

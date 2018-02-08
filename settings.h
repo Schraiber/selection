@@ -7,6 +7,8 @@
  *
  */
 
+#pragma once
+
 #ifndef settings_H
 #define settings_H
 

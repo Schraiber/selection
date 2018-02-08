@@ -7,6 +7,8 @@
  *
  */
 
+#pragma once
+
 #include <vector>
 
 #include "settings.h"
@@ -128,14 +130,33 @@ public:
     double get_ss() {return sample_size;};
     double get_sc() {return sample_count;};
     
+    int get_oldest_idx() {return oldest_idx;};
+    int get_youngest_idx() {return youngest_idx;};
+    int get_idx() {return cur_idx;};
+    
+    void set_oldest_idx(int i) {oldest_idx = i;};
+    void set_youngest_idx(int i) {youngest_idx = i;};
+    void set_idx(int i) {old_idx = cur_idx; cur_idx = i;}; //keeps time the same, but changes the idx
+    void reset_idx() {cur_idx = old_idx;};
+    
+    
 	double propose();
 	double prior();
     void set_path(param_path* p) {curParamPath = p;};
     bool operator<(sample_time& t2) { return (curVal < t2.get()); };
 
 private:
+    //boundaries
     double oldest;
     double youngest;
+    
+    //index of most ancient time, most recent time, current value
+    int oldest_idx;
+    int youngest_idx;
+    int cur_idx;
+    int old_idx;
+    
+    //sample relevant information
     int sample_count;
     int sample_size;
     param_path* curParamPath;

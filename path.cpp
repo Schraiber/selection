@@ -193,65 +193,6 @@ std::vector<double> wfSamplePath::parse_comma_sep(char* c) {
 	return pars;
 }
 
-void wfSamplePath::parse_input_file(std::string fin, int g, double N0) {
-    std::cout << "Parsing input" << std::endl;
-    std::ifstream inFile(fin.c_str());
-    std::string curLineString;
-    int curCount;
-    int curSS;
-    double curLowTime;
-    double curHighTime;
-    double curTime;
-    
-    while (getline(inFile, curLineString)) {
-        std::istringstream curLine(curLineString);
-        curLine >> curCount >> curSS >> curLowTime >> curHighTime;
-        if (curCount < 0 || curCount > curSS) {
-            std::cout << "Allele count is not between 0 and sample size: X = " << curCount << ", SS = " << curSS << std::endl;
-            exit(1);
-        }
-        if (curLowTime > curHighTime) {
-            std::cout << "Low end of time range higher than high end: t_low = " << curLowTime << ", t_high = " << curHighTime << std::endl;
-            exit(1);
-        }
-        if (curLowTime == curHighTime) {
-            //Time is not uncertain
-            curTime = curLowTime/(g*2*N0);
-        } else {
-            //Set the sample time to mean to initialize
-            std::cout << "Uncertainty in sample age not yet implemented, so just setting to mean" << std::endl;
-            curTime = (curLowTime+curHighTime)/2.0/(g*2*N0);
-        }
-        sampleTimeValues.push_back(curTime);
-        sampleSize.push_back(curSS);
-        sampleCount.push_back(curCount);
-    }
-    
-    //Check that everything has the same size
-    int num_samples = sampleCount.size();
-    if (sampleSize.size() != num_samples) {
-        std::cout << "Allele frequencies for " << num_samples << " times but sample sizes for " << sampleSize.size() << " times" << std::endl;
-        exit(1);
-    } else if (sampleTimeValues.size() != num_samples) {
-        std::cout << "Allele frequencies for " << num_samples << " times but sample times for " << sampleTimeValues.size() << " times" << std::endl;
-        exit(1);
-    }
-    
-    //Sort so that samples are in order by mean
-    std::vector<int> index = orderTimeIndex();
-    sampleTimeValues = sortByIndex(sampleTimeValues, index);
-    sampleSize = sortByIndex(sampleSize, index);
-    sampleCount = sortByIndex(sampleCount, index);
-}
-
-std::vector<int> wfSamplePath::orderTimeIndex() {
-    std::vector<int> index(sampleTimeValues.size());
-    for (int i = 0; i < sampleTimeValues.size(); i++) {
-        index[i] = i;
-    };
-    std::sort(index.begin(), index.end(), compare_index(sampleTimeValues));
-    return index;
-}
 
 std::vector<double> wfSamplePath::sortByIndex(std::vector<double>& vec, std::vector<int> index) {
     std::vector<double> temp_vec(index.size());
@@ -262,14 +203,16 @@ std::vector<double> wfSamplePath::sortByIndex(std::vector<double>& vec, std::vec
 }
 
 double wfSamplePath::sampleProb(int i) {
-	int cur_index = sampleTime[i];
+	int idx = sample_time_vec[i]->get_idx();
+    double sc = sample_time_vec[i]->get_sc();
+    double ss = sample_time_vec[i]->get_ss();
 	double sp = 0;
-	if (cur_index != -1) {
-		sp += lgamma(sampleSize[i]+1)-lgamma(sampleCount[i]+1)-lgamma(sampleSize[i]-sampleCount[i]+1);
-		sp += sampleCount[i]*log((1.0-cos(trajectory[sampleTime[i]]))/2.0);
-		sp += (sampleSize[i]-sampleCount[i])*log(1-(1.0-cos(trajectory[sampleTime[i]]))/2.0);
+	if (idx != -1) {
+		sp += lgamma(ss+1)-lgamma(sc+1)-lgamma(ss-sc+1);
+		sp += sc*log((1.0-cos(trajectory[idx]))/2.0);
+		sp += (ss-sc)*log(1-(1.0-cos(trajectory[idx]))/2.0);
 	} else {
-		if (sampleCount[i] == 0) {
+		if (sc == 0) {
 			sp += 0;
 		} else {
 			sp += -INFINITY;
@@ -280,7 +223,7 @@ double wfSamplePath::sampleProb(int i) {
 
 std::vector<double> wfSamplePath::sampleProb() {
 	std::vector<double> sp(0);
-	for (int i = 0; i < sampleTime.size(); i++) {
+	for (int i = 0; i < sample_time_vec.size(); i++) {
 		sp.push_back(sampleProb(i));
 	}
 	return sp;
@@ -294,45 +237,36 @@ void wfSamplePath::print_traj(std::ostream& o) {
 	o << std::endl;
 }
 
-wfSamplePath::wfSamplePath(std::vector<sample_time*>& times, popsize* p, wfMeasure* wf, settings& s): path() {
+wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure* wf, settings& s): path() {
     myPop = p;
     
-    int num_samples = times.size();
+    sample_time_vec = st;
     
-    sampleSize.resize(num_samples);
-    sampleCount.resize(num_samples);
-    sampleTime.resize(0);
-    sampleTimeValues.resize(num_samples);
-    
-    for (int i = 0; i < times.size(); i++) {
-        sampleSize[i] = times[i]->get_ss();
-        sampleCount[i] = times[i]->get_sc();
-        sampleTimeValues[i] = times[i]->get();
-    }
+    int num_samples = st.size();
     
     //Initialize path
     std::vector<double> initial_data(num_samples);
     first_nonzero = -1;
     for (int i = 0; i < num_samples; i++) {
-        initial_data[i] = sampleCount[i]/sampleSize[i];
+        initial_data[i] = sample_time_vec[i]->get_sc()/sample_time_vec[i]->get_ss();
         if (initial_data[i] == 0) {
             initial_data[i] += exp(-10);
         } else if (initial_data[i] == 1) {
             initial_data[i] -= exp(-10);
         }
-        if (first_nonzero == -1 && sampleCount[i] != 0) {
+        if (first_nonzero == -1 && sample_time_vec[i]->get_sc() != 0) {
             first_nonzero = i;
         }
     }
     
     std::vector<double> breakPoints;
     for (int i = 0; i < num_samples-1; i++) {
-        std::vector<double> curBreaks = myPop->getBreakTimes(sampleTimeValues[i],sampleTimeValues[i+1]);
+        std::vector<double> curBreaks = myPop->getBreakTimes(sample_time_vec[i]->get(),sample_time_vec[i+1]->get());
         for (int j = 0; j < curBreaks.size()-1; j++) {
             breakPoints.push_back(curBreaks[j]);
         }
     }
-    breakPoints.push_back(sampleTimeValues[sampleTimeValues.size()-1]);
+    breakPoints.push_back(sample_time_vec[sample_time_vec.size()-1]->get());
     
     
     //create the time vector
@@ -344,7 +278,11 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& times, popsize* p, wfMeasu
     int curBreakStart = 0;
     path* nextPath;
     
-    sampleTime.push_back(cur_end_ind);
+    
+    //WARNING: THIS IS PROBABLY THE MESSED UP PART
+    int cur_time_idx = 0;
+    sample_time_vec[cur_time_idx]->set_idx(cur_end_ind); //NOT 100% SURE THIS IS RIGHT
+    cur_time_idx++;
     std::vector<double> time_vec;
     time_vec.resize(0);
     time_vec.push_back(breakPoints[0]);
@@ -364,14 +302,15 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& times, popsize* p, wfMeasu
             cur_end_ind++;
         }
         time_vec[time_vec.size()-1] = curEnd;
-        if (curEnd == sampleTimeValues[curTimeInd]) {
+        if (curEnd == sample_time_vec[curTimeInd]->get()) {
             nextPath = new path(wf->fisher(initial_data[curBreakStart]), wf->fisher(initial_data[curBreakStart+1]), time_vec[0], time_vec[time_vec.size()-1], wf, time_vec);
             if (curBreakStart == 0) {
                 this->append(nextPath);
             } else {
                 this->append(nextPath,1);
             }
-            sampleTime.push_back(cur_end_ind-1);
+            sample_time_vec[cur_time_idx]->set_idx(cur_end_ind-1);
+            cur_time_idx++;
             curBreakStart++;
             curTimeInd++;
             delete nextPath;
@@ -383,113 +322,6 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& times, popsize* p, wfMeasu
     }
 }
 
-wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
-	
-	sampleSize.resize(0);
-	sampleCount.resize(0);
-	sampleTime.resize(0);
-	
-	if (s.get_popFile() == "") {
-		std::cout << "ERROR: No population size history specified! Use -P option" << std::endl;
-		exit(1);
-	}
-	
-
-    if (s.get_set_gen() && !s.get_set_N0()) {
-        std::cout << "Specified a generation time but not a base population size. Unless your times are measured in units of 2N0 years, this is likely an error" << std::endl;
-    } else if (!s.get_set_gen() && s.get_set_N0()) {
-        std::cout << "Specified base population size but not a generation time. Assuming times are measured in generations, converting all units to 2N0 generations" << std::endl;
-    } else if (s.get_set_gen() && s.get_set_N0()) {
-        std::cout << "Specified both generation time and base population size. Assuming times are measured in years, converting all units to 2N0 generations" << std::endl;
-    } else {
-        std::cout << "Did not specify either generation time or base population size. Assuming times are in units of 2N0 generations" << std::endl;
-    }
-    
-    //make pop sizes
-    myPop = new popsize(s);
-    
-    //Make input data
-    if (s.get_infile() == "") {
-        std::cout << "No input data specified!" << std::endl;
-        exit(1);
-    } else {
-        parse_input_file(s.get_infile(), s.get_gen_time(), s.get_N0());
-    }
-    
-    //Initialize path
-    int num_samples = sampleCount.size();
-	std::vector<double> initial_data(num_samples);
-	first_nonzero = -1;
-	for (int i = 0; i < num_samples; i++) {
-		initial_data[i] = sampleCount[i]/sampleSize[i];
-		if (initial_data[i] == 0) {
-			initial_data[i] += exp(-10);
-		} else if (initial_data[i] == 1) {
-			initial_data[i] -= exp(-10);
-		}
-		if (first_nonzero == -1 && sampleCount[i] != 0) {
-			first_nonzero = i;
-		}
-	}
-	
-	std::vector<double> breakPoints;
-	for (int i = 0; i < num_samples-1; i++) {
-		std::vector<double> curBreaks = myPop->getBreakTimes(sampleTimeValues[i],sampleTimeValues[i+1]);
-		for (int j = 0; j < curBreaks.size()-1; j++) {
-			breakPoints.push_back(curBreaks[j]);
-		}
-	}
-	breakPoints.push_back(sampleTimeValues[sampleTimeValues.size()-1]);
-	
-	
-	//create the time vector
-	double dt = s.get_dt();
-	int min_steps = s.get_grid();
-	int cur_end_ind = 0; 
-	int curTimeInd = 1;
-	int curSampleInd = 1;
-	int curBreakStart = 0;
-	path* nextPath;
-	
-    //TODO: MODIFY TO INITALIZE FROM THE MOST ANCIENT END OF THE TIME UNCERTAINTY
-	sampleTime.push_back(cur_end_ind);
-	std::vector<double> time_vec;
-	time_vec.resize(0);
-	time_vec.push_back(breakPoints[0]);
-	for (int curBreak = 0; curBreak < breakPoints.size()-1; curBreak++) {
-		double curStart = breakPoints[curBreak];
-		double curEnd = breakPoints[curBreak+1];
-		int steps = (curEnd-curStart)/dt+1;
-		if (steps < min_steps) {
-			steps = min_steps;
-		}
-		steps += 1;
-		dt = (curEnd-curStart)/(steps-1);
-		cur_end_ind++;
-		int end_k = time_vec.size()-1+steps;
-		for (int k = time_vec.size(); k < end_k; k++) {
-			time_vec.push_back(time_vec[k-1]+dt);
-			cur_end_ind++;
-		}
-		time_vec[time_vec.size()-1] = curEnd;
-		if (curEnd == sampleTimeValues[curTimeInd]) {
-			nextPath = new path(wf->fisher(initial_data[curBreakStart]), wf->fisher(initial_data[curBreakStart+1]), time_vec[0], time_vec[time_vec.size()-1], wf, time_vec);
-			if (curBreakStart == 0) {
-				this->append(nextPath);
-			} else {
-				this->append(nextPath,1);
-			}
-			sampleTime.push_back(cur_end_ind-1);
-			curBreakStart++;
-			curTimeInd++;
-			delete nextPath;
-			time_vec.resize(0);
-			time_vec.push_back(curEnd);
-			
-		} 
-		cur_end_ind--;
-	}
-}
 
 wfSamplePath::~wfSamplePath() {
 	delete myPop;
@@ -515,14 +347,14 @@ void wfSamplePath::set_allele_age(double a, path* p, int i) {
 	// for sample times that are older than the allele, set the index to -1
 	// for others, reindex
 	k = 0;
-	for (j = 0; j < sampleTime.size(); j++) {
-		if (sampleTimeValues[j] < allele_age) {
-			sampleTime[j] = -1;
+	for (j = 0; j < sample_time_vec.size(); j++) {
+		if (sample_time_vec[j]->get() < allele_age) {
+			sample_time_vec[j]->set_idx(-1);
 			continue;
 		}
 		while (k < time.size()) {
-			if (sampleTimeValues[j] == time[k]) {
-				sampleTime[j] = k;
+			if (sample_time_vec[j]->get() == time[k]) {
+				sample_time_vec[j]->set_idx(k);
 				k++;
 				break;
 			} else {
@@ -553,24 +385,35 @@ void wfSamplePath::reset() {
 		trajectory = tempTraj;
 		time = tempTime;
 		//also need to reset a bunch of other stuff
-		int k = 0;
-		for (int j = 0; j < sampleTime.size(); j++) {
-			if (sampleTimeValues[j] < allele_age) {
-				sampleTime[j] = -1;
-				continue;
-			}
-			while (k < time.size()) {
-				if (sampleTimeValues[j] == time[k]) {
-					sampleTime[j] = k;
-					k++;
-					break;
-				} else {
-					k++;
-				}
-			}
-		}
-		update_begin = 0;
+        for (int i = 0; i < sample_time_vec.size(); i++) {
+            sample_time_vec[i]->reset_idx();
+        }
+
 	}
+}
+
+int wfSamplePath::get_sampleTime(int i) {
+    return sample_time_vec[i]->get_idx();
+}
+
+double wfSamplePath::get_sampleSize(int i) {
+    return sample_time_vec[i]->get_ss();
+}
+
+double wfSamplePath::get_sampleCount(int i) {
+    return sample_time_vec[i]->get_sc();
+}
+
+double wfSamplePath::get_sampleFreq(int i) {
+    return (1.0-cos(trajectory[sample_time_vec[i]->get_idx()]))/2.0;
+}
+
+double wfSamplePath::get_firstNonzero() {
+    return first_nonzero;
+}
+
+double wfSamplePath::get_sampleTimeValue(int i) {
+    return sample_time_vec[i]->get();
 }
 
 void path::replace_time(std::vector<double> new_time) {
