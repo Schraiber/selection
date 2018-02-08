@@ -500,20 +500,14 @@ path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::ve
 	for (i = 0; i < 4; i++) {
 		bb_paths[i] = myWiener.prop_bridge(u[i], xt*v[i], t0, t, time_vec);
 	}
-//	std::vector<path*> bm_paths(4,NULL);
-//	for (i = 0; i < 4; i++) {
-//		bm_paths[i] = sim_bm(0, t0, t, time_vec);
-//	}
-//	std::vector<path*> bb_paths(4,NULL);
-//	for (i = 0; i < 4; i++) {
-//		bb_paths[i] = make_bb_from_bm(bm_paths[i], u[i], xt*v[i]); //check this
-//	}
 	std::vector<double> b4_traj;
 	for (int j = 0; j < bb_paths[0]->get_length(); j++) {
 		b4_traj.push_back(0);
 		for (i = 0; i < 4; i++) {
 			b4_traj[j] += pow(bb_paths[i]->get_traj(j),2);
 			if (b4_traj[j] != b4_traj[j]) {
+                std::cout << "Failing to propose a BES4 bridge from " << x0 << " to " << xt << std::endl;
+                std::cout << "The " << i << "th Brownian bridge between " << u[i] << " and " << xt*v[i] << " is faulty:" << std::endl;
 				bb_paths[i]->print_traj(std::cout);
 				bb_paths[i]->print_time(std::cout);
 				exit(1);

@@ -274,19 +274,18 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
     int min_steps = s.get_grid();
     int cur_end_ind = 0;
     int curTimeInd = 1;
-    int curSampleInd = 1;
     int curBreakStart = 0;
     path* nextPath;
     
     
-    //WARNING: THIS IS PROBABLY THE MESSED UP PART
     int cur_time_idx = 0;
-    sample_time_vec[cur_time_idx]->set_idx(cur_end_ind); //NOT 100% SURE THIS IS RIGHT
+    sample_time_vec[cur_time_idx]->set_idx(cur_end_ind);
     cur_time_idx++;
     std::vector<double> time_vec;
     time_vec.resize(0);
     time_vec.push_back(breakPoints[0]);
     for (int curBreak = 0; curBreak < breakPoints.size()-1; curBreak++) {
+        //make sure the time vector includes all the break points
         double curStart = breakPoints[curBreak];
         double curEnd = breakPoints[curBreak+1];
         int steps = (curEnd-curStart)/dt+1;
@@ -302,6 +301,7 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
             cur_end_ind++;
         }
         time_vec[time_vec.size()-1] = curEnd;
+        //if we hit the time of a data point, simulate path between the two data points
         if (curEnd == sample_time_vec[curTimeInd]->get()) {
             nextPath = new path(wf->fisher(initial_data[curBreakStart]), wf->fisher(initial_data[curBreakStart+1]), time_vec[0], time_vec[time_vec.size()-1], wf, time_vec);
             if (curBreakStart == 0) {

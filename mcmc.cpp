@@ -68,8 +68,8 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	//propose an allele age
 	double firstAge;
 	if (mySettings.get_infer_age()) {
-		firstAge = curPath->get_time(0)-1e-6;
-		//this essentially assumes that there is no population size change between curPath->get_time(0)-1e-6 and curPath->get_time(0)
+		firstAge = curPath->get_time(0)-0.001;
+		//this essentially assumes that there is no population size change between curPath->get_time(0)-0.001 and curPath->get_time(0)
 		//hopefully this is a reasonable thing to think.
 		path* firstPath = new path(curWF->fisher(mySettings.get_fOrigin()), curPath->get_traj(0), firstAge, curPath->get_time(0), curWF, mySettings);
 		curPath->set_allele_age(firstAge, firstPath, 0);

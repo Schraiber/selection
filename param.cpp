@@ -15,6 +15,8 @@
 #include "path.h"
 #include "popsize.h"
 
+#include <algorithm>
+
 void param::updateTuning() {
 	if (numProp > 0) {
 		double curAccept = (double)numAccept/(double)numProp;
@@ -83,12 +85,52 @@ double start_freq::prior() {
 }
 
 
-//TODO: THESE AREN'T RIGHT
 double sample_time::propose() {
     //truncated normal
     oldVal = curVal;
-    curVal = random->truncatedNormalRv(0, PI, oldVal, tuning);
-    double propRatio = random->truncatedNormalPdf(0, PI, curVal, tuning, oldVal);
+    old_idx = cur_idx;
+    curVal = random->truncatedNormalRv(oldest, youngest, oldVal, tuning);
+    //Shift to closest value that's actually in the path
+    //HOW BAD IS THIS IDEA???
+    if (curVal < curParamPath->get_path()->get_time(0)) {
+        //if it's older than the allele age, then set index = -1
+        cur_idx = -1;
+    } else if (curVal < oldVal) {
+        //if less than, go down
+        for (int i = old_idx; i > 0; i--) {
+            if (curParamPath->get_path()->get_time(i) < curVal) {
+                double up_time = curParamPath->get_path()->get_time(i+1);
+                double down_time = curParamPath->get_path()->get_time(i);
+                double up_dif = up_time-curVal;
+                double down_dif = curVal-down_time;
+                if (down_dif < up_dif) {
+                    curVal = down_time;
+                    cur_idx = i;
+                } else {
+                    curVal = up_time;
+                    cur_idx = i+1;
+                }
+            }
+        }
+    } else {
+        //if greater than, go up
+        for (int i = old_idx; i > curParamPath->get_path()->get_length(); i++) {
+            if (curParamPath->get_path()->get_time(i) > curVal) {
+                double up_time = curParamPath->get_path()->get_time(i);
+                double down_time = curParamPath->get_path()->get_time(i-1);
+                double up_dif = up_time-curVal;
+                double down_dif = curVal-down_time;
+                if (down_dif < up_dif) {
+                    curVal = down_time;
+                    cur_idx = i;
+                } else {
+                    curVal = up_time;
+                    cur_idx = i+1;
+                }
+            }
+        }
+    }
+    double propRatio = random->truncatedNormalPdf(oldest, youngest, curVal, tuning, oldVal);
     propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
     propRatio += curParamPath->proposeStart(curVal);
     return propRatio;
@@ -172,20 +214,25 @@ double param_path::proposeStart(double newStart) {
 
 //updates from the beginning
 double param_path::proposeAlleleAge(double newAge) {
-	int end_index = -1;
+	int end_index;
 	((wfSamplePath*)curPath)->set_update_begin();
-	end_index=((wfSamplePath*)curPath)->get_sampleTime(((wfSamplePath*)curPath)->get_firstNonzero());
+    //end_index = random->poissonRv(2*minUpdate);
+	//end_index=((wfSamplePath*)curPath)->get_sampleTime(((wfSamplePath*)curPath)->get_firstNonzero());
+    end_index=2*minUpdate;
 	double x0 = fOrigin; 
 	double t0 = newAge;
 	double xt = curPath->get_traj(end_index);
 	double t = curPath->get_time(end_index);
-	while (t - t0 < .0001 && end_index + minUpdate+curPath->get_length()/fracOfPath < curPath->get_length()) {
+	while (t - t0 < 0.0001 && end_index + minUpdate+curPath->get_length()/fracOfPath < curPath->get_length()) {
 		end_index += minUpdate+curPath->get_length()/fracOfPath;
 		t = curPath->get_time(end_index);
 	}
 	popsize* rho = ((wfSamplePath*)curPath)->get_pop();
 	std::vector<double> newTimeVector = make_time_vector(newAge, end_index, rho);
-	double propRatio = proposeAgePath(x0,xt,t0,t,newTimeVector, end_index);	
+    std::cout << "end_index is " << end_index << " and length of new guy is " <<  newTimeVector.size() << std::endl;
+	double propRatio = proposeAgePath(x0,xt,t0,t,newTimeVector, end_index);
+    propRatio += random->poissonProb(2*minUpdate,newTimeVector.size());
+    propRatio -= random->poissonProb(2*minUpdate, end_index);
 	return propRatio;
 }
 
@@ -194,41 +241,30 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
 	//figure out which times you need to include
 	std::vector<double> timesToInclude;
 	timesToInclude.push_back(newAge);
-	//find the first sample time that's greater than newAage
-	int first_greater = -1;
-	double first_greater_time = -INFINITY;
-	do { 
-		first_greater++;
-		first_greater_time = ((wfSamplePath*)curPath)->get_sampleTimeValue(first_greater);
-	} while (first_greater_time < newAge);
+    
+    //go through times to get which ones are in between
+    double endTime = ((wfSamplePath*)curPath)->get_time(end_index);
+    for (int i = 0; i < ((wfSamplePath*)curPath)->get_num_samples(); i++) {
+        double curTime = ((wfSamplePath*)curPath)->get_sampleTimeValue(i);
+        if (curTime >= newAge && curTime <= endTime) {
+            timesToInclude.push_back(curTime);
+        }
+    }
+
+    //generate the break times
+    std::vector<double> breakPoints = rho->getBreakTimes(newAge,endTime);
+    for (int j = 1; j < breakPoints.size(); j++) {
+        timesToInclude.push_back(breakPoints[j]);
+    }
+    
+    //sort
+    std::sort(timesToInclude.begin(), timesToInclude.end());
+    //ensure uniqueness
+    std::vector<double>::iterator it = std::unique(timesToInclude.begin(), timesToInclude.end());
+    timesToInclude.resize( std::distance(timesToInclude.begin(), it) );
+
 	
-	std::vector<double> breakPoints = rho->getBreakTimes(newAge,first_greater_time);
-	for (int j = 1; j < breakPoints.size(); j++) {
-		timesToInclude.push_back(breakPoints[j]);
-	}
-	double endTime = curPath->get_time(end_index);
-	if (first_greater_time != endTime) {
-		for (int i = first_greater; i < ((wfSamplePath*)curPath)->get_num_samples() - 1; i++) {
-			double curTime = ((wfSamplePath*)curPath)->get_sampleTimeValue(i);
-			double nextTime = ((wfSamplePath*)curPath)->get_sampleTimeValue(i+1);
-			if (nextTime < endTime && curTime > newAge) {
-				//for times that are between the age and the end
-				breakPoints = rho->getBreakTimes(curTime, nextTime);
-				for (int j = 1; j < breakPoints.size(); j++) {
-					timesToInclude.push_back(breakPoints[j]);
-				}
-			} else if (nextTime >= endTime && curTime > newAge) {
-				//for the last one, where the end time is just endTime
-				//and not nextTime
-				breakPoints = rho->getBreakTimes(curTime, endTime);
-				for (int j = 1; j < breakPoints.size(); j++) {
-					timesToInclude.push_back(breakPoints[j]);
-				}
-				break;
-			} 
-		}
-	}
-	//create the vector, going between each pair of things
+    //create the vector, going between each pair of things
 	std::vector<double> newTimes;
 	int cur_ind = 0;
 	int temp_ind = 0;

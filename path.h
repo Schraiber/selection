@@ -114,6 +114,7 @@ public:
 private:
 	//relevant to the sample
     std::vector<sample_time*> sample_time_vec;
+    std::vector<double> all_times;
 	
 	//relevant to allele age
 	double allele_age; //the age itself

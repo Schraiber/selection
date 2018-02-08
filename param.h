@@ -130,6 +130,9 @@ public:
     double get_ss() {return sample_size;};
     double get_sc() {return sample_count;};
     
+    double get_oldest() {return oldest;};
+    double get_youngest() {return youngest;};
+    
     int get_oldest_idx() {return oldest_idx;};
     int get_youngest_idx() {return youngest_idx;};
     int get_idx() {return cur_idx;};

@@ -198,9 +198,9 @@ popsize* settings::parse_popsize_file() {
     }
     
     
-    if (set_gen && set_N0) {
+    if (set_gen && !set_N0) {
         std::cout << "Specified a generation time but not a base population size. Unless your times are measured in units of 2N0 years, this is likely an error" << std::endl;
-    } else if (set_gen && set_N0) {
+    } else if (!set_gen && set_N0) {
         std::cout << "Specified base population size but not a generation time. Assuming times are measured in generations, converting all units to 2N0 generations" << std::endl;
     } else if (set_gen && set_N0) {
         std::cout << "Specified both generation time and base population size. Assuming times are measured in years, converting all units to 2N0 generations" << std::endl;
