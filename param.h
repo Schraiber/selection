@@ -122,9 +122,23 @@ private:
 
 //if sample times are uncertain
 class sample_time: public param {
-	sample_time(double x, MbRandom* r): param(x, r) {};
+public:
+    sample_time(double x, double anc, double rec, int ss, int sc, MbRandom* r): param(x, r) {oldest = anc; youngest = rec; sample_size = ss; sample_count = sc;};
+    
+    double get_ss() {return sample_size;};
+    double get_sc() {return sample_count;};
+    
 	double propose();
 	double prior();
+    void set_path(param_path* p) {curParamPath = p;};
+    bool operator<(sample_time& t2) { return (curVal < t2.get()); };
+
+private:
+    double oldest;
+    double youngest;
+    int sample_count;
+    int sample_size;
+    param_path* curParamPath;
 };
 
 //for learning the per-base-pair recombination rate

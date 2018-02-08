@@ -9,9 +9,13 @@
 
 #include "math.h"
 #include "settings.h"
+#include "param.h"
+#include "MbRandom.h"
+#include "popsize.h"
 
 #include <vector>
 #include <string>
+#include <fstream>
 #include <sstream>
 #include <iostream>
 
@@ -35,7 +39,7 @@ settings::settings(int argc, char* const argv[]) {
 	fOrigin = 0.0;
 	infer_age = 0;
 	popFile = "";
-    inFile = "";
+    inputFile = "";
 	mySeed = time(0);
 	output_tsv = 0;
     a1prop = 1.0;
@@ -142,7 +146,7 @@ settings::settings(int argc, char* const argv[]) {
                 break;
             case 'D':
                 mcmc = 1;
-                inFile = argv[ac+1];
+                inputFile = argv[ac+1];
                 ac += 2;
                 break;
 		}
@@ -186,3 +190,65 @@ void settings::print() {
 		}
 	}
 }
+
+popsize* settings::parse_popsize_file() {
+    if (popFile == "") {
+    std::cout << "ERROR: No population size history specified! Use -P option" << std::endl;
+    exit(1);
+    }
+    
+    
+    if (set_gen && set_N0) {
+        std::cout << "Specified a generation time but not a base population size. Unless your times are measured in units of 2N0 years, this is likely an error" << std::endl;
+    } else if (set_gen && set_N0) {
+        std::cout << "Specified base population size but not a generation time. Assuming times are measured in generations, converting all units to 2N0 generations" << std::endl;
+    } else if (set_gen && set_N0) {
+        std::cout << "Specified both generation time and base population size. Assuming times are measured in years, converting all units to 2N0 generations" << std::endl;
+    } else {
+        std::cout << "Did not specify either generation time or base population size. Assuming times are in units of 2N0 generations" << std::endl;
+    }
+    
+    //make pop sizes
+    return new popsize(*this);
+}
+
+std::vector<sample_time*> settings::parse_input_file(MbRandom* r) {
+    std::cout << "Parsing input" << std::endl;
+    std::ifstream inFile(inputFile.c_str());
+    std::string curLineString;
+    int curCount;
+    int curSS;
+    double curLowTime;
+    double curHighTime;
+    double curTime;
+    
+    std::vector<sample_time*> sample_time_vec;
+    
+    while (getline(inFile, curLineString)) {
+        std::istringstream curLine(curLineString);
+        curLine >> curCount >> curSS >> curLowTime >> curHighTime;
+        if (curCount < 0 || curCount > curSS) {
+            std::cout << "Allele count is not between 0 and sample size: X = " << curCount << ", SS = " << curSS << std::endl;
+            exit(1);
+        }
+        if (curLowTime > curHighTime) {
+            std::cout << "Low end of time range higher than high end: t_low = " << curLowTime << ", t_high = " << curHighTime << std::endl;
+            exit(1);
+        }
+        //Convert time units
+        curLowTime /= (gen_time*2*N0);
+        curHighTime /= (gen_time*2*N0);
+        //Set the sample time to mean to initialize
+        curTime = (curLowTime+curHighTime)/2.0;
+        
+        sample_time* cur_sample_time = new sample_time(curTime, curLowTime, curHighTime, curSS, curCount, r);
+        sample_time_vec.push_back(cur_sample_time);
+    }
+    
+    //Sort so in order by current value
+    std::sort(sample_time_vec.begin(), sample_time_vec.end());
+
+    return sample_time_vec;
+}
+
+

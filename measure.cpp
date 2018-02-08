@@ -13,7 +13,6 @@
 #include "measure.h"
 #include "path.h"
 #include "MbRandom.h"
-#include "matrix.h"
 #include "popsize.h"
 
 measure::measure(MbRandom* r) {

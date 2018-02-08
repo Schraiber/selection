@@ -13,6 +13,7 @@
 #include "settings.h"
 #include "measure.h"
 #include "popsize.h"
+#include "param.h"
 
 #include <vector>
 #include <string>
@@ -293,6 +294,93 @@ void wfSamplePath::print_traj(std::ostream& o) {
 	o << std::endl;
 }
 
+wfSamplePath::wfSamplePath(std::vector<sample_time*>& times, popsize* myPop, wfMeasure* wf, settings& s): path() {
+    int num_samples = times.size();
+    
+    sampleSize.resize(num_samples);
+    sampleCount.resize(num_samples);
+    sampleTime.resize(0);
+    sampleTimeValues.resize(num_samples);
+    
+    for (int i = 0; i < times.size(); i++) {
+        sampleSize[i] = times[i]->get_ss();
+        sampleCount[i] = times[i]->get_sc();
+        sampleTimeValues[i] = times[i]->get();
+    }
+    
+    //Initialize path
+    std::vector<double> initial_data(num_samples);
+    first_nonzero = -1;
+    for (int i = 0; i < num_samples; i++) {
+        initial_data[i] = sampleCount[i]/sampleSize[i];
+        if (initial_data[i] == 0) {
+            initial_data[i] += exp(-10);
+        } else if (initial_data[i] == 1) {
+            initial_data[i] -= exp(-10);
+        }
+        if (first_nonzero == -1 && sampleCount[i] != 0) {
+            first_nonzero = i;
+        }
+    }
+    
+    std::vector<double> breakPoints;
+    for (int i = 0; i < num_samples-1; i++) {
+        std::vector<double> curBreaks = myPop->getBreakTimes(sampleTimeValues[i],sampleTimeValues[i+1]);
+        for (int j = 0; j < curBreaks.size()-1; j++) {
+            breakPoints.push_back(curBreaks[j]);
+        }
+    }
+    breakPoints.push_back(sampleTimeValues[sampleTimeValues.size()-1]);
+    
+    
+    //create the time vector
+    double dt = s.get_dt();
+    int min_steps = s.get_grid();
+    int cur_end_ind = 0;
+    int curTimeInd = 1;
+    int curSampleInd = 1;
+    int curBreakStart = 0;
+    path* nextPath;
+    
+    sampleTime.push_back(cur_end_ind);
+    std::vector<double> time_vec;
+    time_vec.resize(0);
+    time_vec.push_back(breakPoints[0]);
+    for (int curBreak = 0; curBreak < breakPoints.size()-1; curBreak++) {
+        double curStart = breakPoints[curBreak];
+        double curEnd = breakPoints[curBreak+1];
+        int steps = (curEnd-curStart)/dt+1;
+        if (steps < min_steps) {
+            steps = min_steps;
+        }
+        steps += 1;
+        dt = (curEnd-curStart)/(steps-1);
+        cur_end_ind++;
+        int end_k = time_vec.size()-1+steps;
+        for (int k = time_vec.size(); k < end_k; k++) {
+            time_vec.push_back(time_vec[k-1]+dt);
+            cur_end_ind++;
+        }
+        time_vec[time_vec.size()-1] = curEnd;
+        if (curEnd == sampleTimeValues[curTimeInd]) {
+            nextPath = new path(wf->fisher(initial_data[curBreakStart]), wf->fisher(initial_data[curBreakStart+1]), time_vec[0], time_vec[time_vec.size()-1], wf, time_vec);
+            if (curBreakStart == 0) {
+                this->append(nextPath);
+            } else {
+                this->append(nextPath,1);
+            }
+            sampleTime.push_back(cur_end_ind-1);
+            curBreakStart++;
+            curTimeInd++;
+            delete nextPath;
+            time_vec.resize(0);
+            time_vec.push_back(curEnd);
+            
+        } 
+        cur_end_ind--;
+    }
+}
+
 wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 	
 	sampleSize.resize(0);
@@ -361,6 +449,7 @@ wfSamplePath::wfSamplePath(settings& s, wfMeasure* wf) : path() {
 	int curBreakStart = 0;
 	path* nextPath;
 	
+    //TODO: MODIFY TO INITALIZE FROM THE MOST ANCIENT END OF THE TIME UNCERTAINTY
 	sampleTime.push_back(cur_end_ind);
 	std::vector<double> time_vec;
 	time_vec.resize(0);

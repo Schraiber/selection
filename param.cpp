@@ -83,6 +83,25 @@ double start_freq::prior() {
 }
 
 
+//TODO: THESE AREN'T RIGHT
+double sample_time::propose() {
+    //truncated normal
+    oldVal = curVal;
+    curVal = random->truncatedNormalRv(0, PI, oldVal, tuning);
+    double propRatio = random->truncatedNormalPdf(0, PI, curVal, tuning, oldVal);
+    propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
+    propRatio += curParamPath->proposeStart(curVal);
+    return propRatio;
+}
+
+double sample_time::prior() {
+    //uniform on [0,1] results in this density on the transformed space
+    double pOld = log(sin(oldVal)) - log(2);
+    double pNew = log(sin(curVal)) - log(2);
+    return pNew - pOld;
+    return 0;
+}
+
 double param_age::propose() {
 	oldVal = curVal;
 	int topTimeInd = ((wfSamplePath*)curParamPath->get_path())->get_firstNonzero();
@@ -155,18 +174,6 @@ double param_path::proposeStart(double newStart) {
 double param_path::proposeAlleleAge(double newAge) {
 	int end_index = -1;
 	((wfSamplePath*)curPath)->set_update_begin();
-//	if (newAge < ((wfSamplePath*)curPath)->get_allele_age()) {
-//		//if the new age is MORE ANCIENT
-//		end_index = minUpdate+curPath->get_length()/fracOfPath;
-//	} else {
-//		//if the new age is LESS ANCIENT
-//		for (int i = 0; i < curPath->get_length(); i++) {
-//			if (curPath->get_time(i) > newAge || (int)(i + (minUpdate + curPath->get_length()/fracOfPath))==(curPath->get_length()-3)) {
-//				end_index = i + minUpdate + curPath->get_length()/fracOfPath;
-//				break;
-//			}
-//		}
-//	}
 	end_index=((wfSamplePath*)curPath)->get_sampleTime(((wfSamplePath*)curPath)->get_firstNonzero());
 	double x0 = fOrigin; 
 	double t0 = newAge;
@@ -285,35 +292,11 @@ double param_path::propose(double x0, double xt, double t0, double t, std::vecto
 	curPath->modify(newPath,start_index);
 	
 	double propRatio = 0;
-	//compute the path part of the proposal
-//	wienerMeasure myWiener(random);
-//	propRatio += myWiener.log_girsanov(oldPath, myCBP, -INFINITY, INFINITY,1);
-//	propRatio -= myWiener.log_girsanov(newPath, myCBP, -INFINITY, INFINITY,1);
-
-//	std::cout << "Old path" << std::endl;
-//	oldPath->print_traj(std::cout);
-//	std::cout << "Old time" << std::endl;
-//	oldPath->print_time(std::cout);
-//	std::cout << myWiener.log_girsanov(oldPath, myCBP, -INFINITY, INFINITY,1) << std::endl;
-//	std::cout << "New Path" << std::endl;
-//	newPath->print_traj(std::cout);
-//	std::cout << "New time" << std::endl;
-//	newPath->print_time(std::cout);
-//	std::cout << myWiener.log_girsanov(newPath, myCBP, -INFINITY, INFINITY,1) << std::endl;
 	
 	//compute the likelihood ratio of current path under WF measure relative to CBP measure
 	propRatio += myCBP->log_girsanov_wf_r(newPath, a1->get(), a2->get(),rho, 1);
 	propRatio -= myCBP->log_girsanov_wf_r(oldPath, a1->get(), a2->get(),rho, 1);
 	
-	
-//	newPath->print_traj(std::cout);
-//	newPath->print_time(std::cout);
-//	std::cout << myCBP->log_girsanov_wf(newPath, gam->get(), 1) << std::endl;
-//	std::cout << std::endl;
-//	oldPath->print_traj(std::cout);
-//	oldPath->print_time(std::cout);
-//	std::cout << myCBP->log_girsanov_wf(oldPath, gam->get(), 1) << std::endl;
-//	std::cout << std::endl;
 	
 	delete myCBP;
 	delete newPath;
@@ -344,46 +327,11 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 	((wfSamplePath*)curPath)->set_allele_age(t0, newPath, end_index);
 	
 	double propRatio = 0;
-//	wienerMeasure myWiener(random);
-//	propRatio += myWiener.log_girsanov(oldPath, myCBP, -INFINITY, INFINITY, 0); //NB: these are really bridges
-//	propRatio -= myWiener.log_girsanov(newPath, myCBP, -INFINITY, INFINITY, 0); //but I want to be able to set ratio myself
-	
-	
-//	propRatio += 3.0/2.0*log(tOld);
-//	propRatio -= 3.0/2.0*log(tNew);
-
-//	std::cout << tOld << " " << tNew << std::endl;
-//	oldPath->print_traj(std::cout);
-//	oldPath->print_time(std::cout);
-//	std::cout << myWiener.log_girsanov(oldPath, myCBP, -INFINITY, INFINITY,0) << std::endl;
-//	std::cout << 3.0/2.0*log(tOld) << std::endl;
-//	std::cout << std::endl;
-//	newPath->print_traj(std::cout);
-//	newPath->print_time(std::cout);
-//	std::cout << myWiener.log_girsanov(newPath, myCBP, -INFINITY, INFINITY,0) << std::endl;
-//	std::cout << 3.0/2.0*log(tNew) << std::endl;
-//	std::cout << std::endl;
 	
 	//compute the likelihood ratio of current path under WF measure relative to CBP measure
 	//NB: These ARE bridges but I want to compute the thing myself!
 	propRatio += myCBP->log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0);
 	propRatio -= myCBP->log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0);
-
-//	if (t0 < -0.1580 && t0 > -0.1589) {
-//		std::cout << "New path!" << std::endl;
-//		newPath->print_traj(std::cout);
-//		newPath->print_time(std::cout);
-//		std::cout << myCBP->log_girsanov_wf(newPath, gam->get(), 0) << std::endl;
-//		std::cout << "Old path!" << std::endl;
-//		oldPath->print_traj(std::cout);
-//		oldPath->print_time(std::cout);
-//		std::cout << myCBP->log_girsanov_wf(oldPath, gam->get(), 0) << std::endl;
-//		std::cout << "Times! New and Old" << std::endl;
-//		std::cout << tNew << " " << tOld << std::endl;
-//		std::cout << "Time likelihood ratio" << std::endl;
-//		std::cout << -1.0/2.0*xt*xt*(1.0/tNew-1.0/tOld)+2*log(tOld)-2*log(tNew) << std::endl;
-//		std::cout << std::endl;
-//	}
 	
 	propRatio += -1.0/2.0*xt*xt*(1.0/tNew-1.0/tOld)+2*log(tOld)-2*log(tNew);
 	

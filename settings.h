@@ -14,6 +14,10 @@
 #include <vector>
 #include <stdlib.h>
 
+class sample_time;
+class MbRandom;
+class popsize;
+
 class settings {
 public:
 	settings(int argc, char* const argv[]);
@@ -33,9 +37,6 @@ public:
 	double get_rescale() {return rescale;};
 	int get_printFreq() {return printFreq;};
 	int get_sampleFreq() {return sampleFreq;};
-	char* get_sample_freq() {return sample_freq;};
-	char* get_sample_size() {return sample_size;};
-	char* get_sample_time() {return sample_time;};
 	std::string get_baseName() {return baseName;};
 	int getMinUpdate() {return min_update;};
 	int getFracOfPath() {return fracOfPath;};
@@ -55,10 +56,12 @@ public:
     bool get_set_N0() {return set_N0;};
     int get_gen_time() {return gen_time;};
     double get_N0() {return N0;};
-    std::string get_infile() {return inFile;};
+    std::string get_infile() {return inputFile;};
 		
 	//parse things
 	std::vector<double> parse_bridge_pars();
+    std::vector<sample_time*> parse_input_file(MbRandom* r);
+    popsize* parse_popsize_file();
 	
 private:
 	double max_dt; //largest acceptable dt for paths
@@ -72,9 +75,6 @@ private:
 	int num_test; //number of tests to try to estimate the scaling factor for rejection sampling
 	double rescale; //scaling factor for rejection sampling
 	int printFreq;
-	char* sample_freq;
-	char* sample_size;
-	char* sample_time; 
 	std::string baseName;
 	int sampleFreq; //how often to sample the chain. NOTE DIFFERENCE FROM sample_freq!!!
 	int fracOfPath;
@@ -95,7 +95,7 @@ private:
     bool set_N0;
     int gen_time;
     double N0;
-    std::string inFile;
+    std::string inputFile;
 };
 
 

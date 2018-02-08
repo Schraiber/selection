@@ -56,17 +56,25 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		
 	//propose initial sample path between the sampled points
 	wfSamplePath* curPath = new wfSamplePath(mySettings,curWF);
+    
+    //parse the settings
+    //popsize* myPop = mySettings.parse_popsize_file();
+    //std::vector<sample_time*> sample_time_vec = mySettings.parse_input_file(random);
+    
+    //initialize path
+    //wfSamplePath* curPath = new wfSamplePath(sample_time_vec, myPop, curWF, mySettings);
+    
+    curPath->print();
+    exit(1);
 	
 	//propose an allele age
 	double firstAge;
 	if (mySettings.get_infer_age()) {
-		firstAge = curPath->get_time(0)-1e-6;//-curWF->expected_age((1-cos(curPath->get_traj(0)))/2.0)/10.0;
+		firstAge = curPath->get_time(0)-1e-6;
 		//this essentially assumes that there is no population size change between curPath->get_time(0)-1e-6 and curPath->get_time(0)
 		//hopefully this is a reasonable thing to think.
 		path* firstPath = new path(curWF->fisher(mySettings.get_fOrigin()), curPath->get_traj(0), firstAge, curPath->get_time(0), curWF, mySettings);
 		curPath->set_allele_age(firstAge, firstPath, 0);
-		//curPath->print_traj(std::cout);
-		//curPath->print_time(std::cout);
 	}
 	
 	param_gamma* alpha1 = new param_gamma(mySettings.get_a1start(),random);
@@ -95,8 +103,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	propChance.push_back(mySettings.get_ageprop()); //update start/age 2
 	propChance.push_back(mySettings.get_endprop()); //update end 2
 	propChance.push_back(mySettings.get_pathprop()); //update path 5
-//	propChance.push_back(.1); //gamma -> -gamma .1
-//	propChance.push_back(.1); //h -> h->1-h .1
+
 	//store as a cdf
 	double sum = 0;
 	for (int i = 0; i < propChance.size(); i++) {
@@ -109,7 +116,6 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	}
 	
 	//compute starting lnL
-	//curlnL = compute_lnL(curPath, curWF, myWiener);
 	curlnL = compute_lnL_sample_only(curPath);
 	
 	//run mcmc
@@ -143,7 +149,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
             std::cout << curlnL << " " << oldlnL << std::endl;
             exit(1);
         }
-		if (curProp == 0 || curProp == 1 || curProp == 5 || curProp == 6) {
+		if (curProp == 0 || curProp == 1) {
 			//need to compute LL ratio due to the new alpha...
 			cbpMeasure quickCBP(random);
 			LLRatio += quickCBP.log_girsanov_wfwf_r(curPath, pars[0]->getOld(), pars[0]->get(), pars[1]->getOld(), pars[1]->get(), curPath->get_pop());
@@ -183,13 +189,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		
 		if (gen % printFreq == 0) {
 			std::cout << state << std::endl;
-//			std::cin.get(); 
 		}
-	
-		
-//		if (curProp == 1) {
-//			std::cin.get();
-//		}
 		
 		int tuningFreq = num_gen/1000;
 		if (tuningFreq < 100) {
@@ -204,7 +204,6 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			}
 		}
 				
-		//std::cout << gen << "\t" << curlnL << "\t" << pars[1]->get() << "\t" << curPath->get_traj(0) << "\t" << curPath->get_traj(curPath->get_length()-1) << std::endl;
         
 		if (gen % sampleFreq == 0) {
 			cbpMeasure testCBP(random);
@@ -215,8 +214,6 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			timeFile << gen << " "; 
 			curPath->print_time(timeFile << std::setprecision(20));
 		}
-        //REMOVE THIS
-        //std::cin.get();
 	}
 	
 	
@@ -226,50 +223,26 @@ void mcmc::no_linked_sites(settings& mySettings) {
 //for now, this computes the lnL of the WHOLE PATH (wrt Wiener measure) and SAMPLES
 //could be optimized to only care about updated portions of path?
 double mcmc::compute_lnL(wfSamplePath* p, measure* m, wienerMeasure* wm) {
-//	if (curProp == 1) {
-//		p->print_traj(std::cout);
-//		p->print_time(std::cout);
-//	}
 	//compute dP/dW
 	double gir = wm->log_girsanov(p, m, 0, PI);
 	//compute sampling probs
 	double sample_prob = 0;
 	for (int i = 0; i < p->get_num_samples(); i++) {
-//		if (curProp == 1) {
-//			std::cout << p->get_sampleFreq(i) << " ";
-//			double curSample_prob = p->sampleProb(i);
-//			std::cout << curSample_prob << " ";
-//		}
 		sample_prob += p->sampleProb(i);
 	}
-//	if (curProp == 1) {
-//		std::cout << std::endl;
-//		std::cout << ((wfMeasure*)m)->get_gamma() << std::endl;
-//		std::cout << gir << " " << sample_prob << std::endl;
-//		std::cout << std::endl;
-//	}
-	//compute the probability of a BM goint the same distance
-//	double t_span = p->get_time(p->get_length()-1)-p->get_time(0);
-//	double y_span = p->get_traj(p->get_length()-1)-p->get_traj(0);
-//	double bm_like = 1.0/2.0*log(2*PI*t_span)-(y_span*y_span)/(2.0*t_span);
 	
 	if (gir != gir) {
-		std::cout << "why the fuck is this shit nan? Generation " << gen << ". Proposal " << curProp << std::endl;
+		std::cout << "Likelihood is nan at generation " << gen << ". Proposal " << curProp << std::endl;
 		p->print_traj(std::cout);
 		p->print_time(std::cout);
 		exit(1);
 	}
-	return gir + sample_prob;// + bm_like;
+	return gir + sample_prob;
 }
 
 double mcmc::compute_lnL_sample_only(wfSamplePath* p) {
 	double sample_prob = 0;
 	for (int i = 0; i < p->get_num_samples(); i++) {
-		//		if (curProp == 1) {
-		//			std::cout << p->get_sampleFreq(i) << " ";
-		//			double curSample_prob = p->sampleProb(i);
-		//			std::cout << curSample_prob << " ";
-		//		}
 		sample_prob += p->sampleProb(i);
 	}
 	

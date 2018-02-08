@@ -19,6 +19,7 @@ class settings;
 class measure;
 class wfMeasure;
 class popsize;
+class sample_time;
 
 class path {
 
@@ -76,6 +77,7 @@ public:
 	//constructor
 	wfSamplePath(std::vector<double> p, std::vector<double> t) : path(p,t) {sampleTime.resize(0); sampleSize.resize(0); sampleCount.resize(0);};
 	wfSamplePath(settings& s, wfMeasure* wf); //initializes a path from sample info, NB: does not propose the beginning!
+    wfSamplePath(std::vector<sample_time*>& times, popsize* myPop, wfMeasure* wf, settings& s); //same as previous, but breaks out the parsing
 	
 	//destructor
 	~wfSamplePath();
@@ -115,8 +117,6 @@ private:
 	//relevant to the sample
 	std::vector<int> sampleTime; //stores the INDICES of the time samples of the path (if == -1, then allele didn't exist!)
 	std::vector<double> sampleTimeValues; //stores the actual times of the samples
-    std::vector<double> lowerTimeValues; //the lower limits of the sample times
-    std::vector<double> upperTimeValues; //the upper limit of hte sample times
 	std::vector<double> sampleSize; //stores the sample sizes at the time samples of the path
 	std::vector<double> sampleCount; //stores the sample count of the favored allele at the time samples of the path
 	
