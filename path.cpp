@@ -294,7 +294,9 @@ void wfSamplePath::print_traj(std::ostream& o) {
 	o << std::endl;
 }
 
-wfSamplePath::wfSamplePath(std::vector<sample_time*>& times, popsize* myPop, wfMeasure* wf, settings& s): path() {
+wfSamplePath::wfSamplePath(std::vector<sample_time*>& times, popsize* p, wfMeasure* wf, settings& s): path() {
+    myPop = p;
+    
     int num_samples = times.size();
     
     sampleSize.resize(num_samples);

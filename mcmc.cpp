@@ -55,17 +55,15 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	curWF->set_num_test(mySettings.get_num_test());
 		
 	//propose initial sample path between the sampled points
-	wfSamplePath* curPath = new wfSamplePath(mySettings,curWF);
+	//wfSamplePath* curPath = new wfSamplePath(mySettings,curWF);
     
     //parse the settings
-    //popsize* myPop = mySettings.parse_popsize_file();
-    //std::vector<sample_time*> sample_time_vec = mySettings.parse_input_file(random);
+    popsize* myPop = mySettings.parse_popsize_file();
+    std::vector<sample_time*> sample_time_vec = mySettings.parse_input_file(random);
     
     //initialize path
-    //wfSamplePath* curPath = new wfSamplePath(sample_time_vec, myPop, curWF, mySettings);
-    
-    curPath->print();
-    exit(1);
+    wfSamplePath* curPath = new wfSamplePath(sample_time_vec, myPop, curWF, mySettings);
+
 	
 	//propose an allele age
 	double firstAge;
