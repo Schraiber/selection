@@ -246,7 +246,7 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
     
     //Initialize path
     std::vector<double> initial_data(num_samples);
-    first_nonzero = -1;
+    first_nonzero = -INFINITY;
     for (int i = 0; i < num_samples; i++) {
         initial_data[i] = sample_time_vec[i]->get_sc()/sample_time_vec[i]->get_ss();
         if (initial_data[i] == 0) {
@@ -254,8 +254,8 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
         } else if (initial_data[i] == 1) {
             initial_data[i] -= exp(-10);
         }
-        if (first_nonzero == -1 && sample_time_vec[i]->get_sc() != 0) {
-            first_nonzero = i;
+        if (first_nonzero == -INFINITY && sample_time_vec[i]->get_sc() != 0) {
+            first_nonzero = sample_time_vec[i]->get();
         }
     }
     
@@ -414,6 +414,14 @@ double wfSamplePath::get_firstNonzero() {
 
 double wfSamplePath::get_sampleTimeValue(int i) {
     return sample_time_vec[i]->get();
+}
+
+void wfSamplePath::updateFirstNonzero(double t) {
+    old_first_nonzero = first_nonzero;
+    first_nonzero = t;
+    if (t < old_first_nonzero) {
+        first_nonzero = t;
+    }
 }
 
 void path::replace_time(std::vector<double> new_time) {

@@ -22,7 +22,7 @@
 settings::settings(int argc, char* const argv[]) {
 	
 	//define defaults
-	max_dt = .0001;
+	max_dt = 0.0001;
 	min_grid = 10;
 	bridge = 0;
 	mcmc = 0;

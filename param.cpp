@@ -123,14 +123,15 @@ double sample_time::propose() {
                 double down_dif = curVal-down_time;
                 if (down_dif < up_dif) {
                     curVal = down_time;
-                    cur_idx = i;
+                    cur_idx = i-1;
                 } else {
                     curVal = up_time;
-                    cur_idx = i+1;
+                    cur_idx = i;
                 }
             }
         }
     }
+    ((wfSamplePath*)curParamPath->get_path())->updateFirstNonzero(curVal);
     double propRatio = random->truncatedNormalPdf(oldest, youngest, curVal, tuning, oldVal);
     propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
     propRatio += curParamPath->proposeStart(curVal);
@@ -147,8 +148,7 @@ double sample_time::prior() {
 
 double param_age::propose() {
 	oldVal = curVal;
-	int topTimeInd = ((wfSamplePath*)curParamPath->get_path())->get_firstNonzero();
-	double topTime = ((wfSamplePath*)curParamPath->get_path())->get_sampleTimeValue(topTimeInd);
+	double topTime = ((wfSamplePath*)(curParamPath->get_path()))->get_firstNonzero();
 	curVal = random->truncatedHalfNormalRv(topTime, 0, oldVal, tuning);
 //  std::cout << "Vals: " << oldVal << " " << curVal << std::endl;
 	double propRatio = log(random->truncatedHalfNormalPdf(topTime, 0, curVal, tuning, oldVal));
@@ -394,4 +394,10 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 
 void param_path::reset() {
 	curPath->reset();
+}
+
+void sample_time::reset() {
+    curVal = oldVal;
+    cur_idx = old_idx;
+    ((wfSamplePath*)curParamPath->get_path())->resetFirstNonzero();
 }

@@ -141,6 +141,7 @@ public:
     void set_youngest_idx(int i) {youngest_idx = i;};
     void set_idx(int i) {old_idx = cur_idx; cur_idx = i;}; //keeps time the same, but changes the idx
     void reset_idx() {cur_idx = old_idx;};
+    void reset();
     
     
 	double propose();

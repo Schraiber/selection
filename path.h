@@ -92,7 +92,10 @@ public:
 	double get_sampleFreq(int i);
 	double get_firstNonzero();
     double get_sampleTimeValue(int i);
-
+    
+    //change sample aspects
+    void updateFirstNonzero(double t);
+    void resetFirstNonzero() {first_nonzero=old_first_nonzero;};
 	
 	//for allele age stuff
 	void set_allele_age(double a, path* p, int i); //this should set the allele age, prepend the new path starting at CURRENT i, and fix up sampleTime. 
@@ -122,7 +125,8 @@ private:
 	bool update_begin; //was the begining modified?
 	std::vector<double> old_begin_traj; //the trajectory from the old beginning
 	std::vector<double> old_begin_time; //The times from the old beginning
-	int first_nonzero; //the first sample time where there are more than 0 copies of the derived allele
+	double first_nonzero; //the first sample time where there are more than 0 copies of the derived allele
+    double old_first_nonzero;
 	
 	//parses comma separated list of parameters
 	std::vector<double> parse_comma_sep(char* c);
