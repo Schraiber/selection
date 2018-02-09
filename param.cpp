@@ -91,6 +91,7 @@ double sample_time::propose() {
     oldVal = curVal;
     old_idx = cur_idx;
     curVal = random->truncatedNormalRv(oldest, youngest, oldVal, tuning);
+    double startVal = curVal;
     //Shift to closest value that's actually in the path
     //HOW BAD IS THIS IDEA???
     if (curVal < curParamPath->get_path()->get_time(0)) {
@@ -111,11 +112,12 @@ double sample_time::propose() {
                     curVal = up_time;
                     cur_idx = i+1;
                 }
+                break;
             }
         }
     } else {
         //if greater than, go up
-        for (int i = old_idx; i > curParamPath->get_path()->get_length(); i++) {
+        for (int i = old_idx; i < curParamPath->get_path()->get_length(); i++) {
             if (curParamPath->get_path()->get_time(i) > curVal) {
                 double up_time = curParamPath->get_path()->get_time(i);
                 double down_time = curParamPath->get_path()->get_time(i-1);
@@ -128,21 +130,29 @@ double sample_time::propose() {
                     curVal = up_time;
                     cur_idx = i;
                 }
+                break;
             }
         }
     }
-    ((wfSamplePath*)curParamPath->get_path())->updateFirstNonzero(curVal);
+    if (cur_idx!=-1) {
+        ((wfSamplePath*)curParamPath->get_path())->updateFirstNonzero(curVal);
+    }
     double propRatio = random->truncatedNormalPdf(oldest, youngest, curVal, tuning, oldVal);
-    propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
-    propRatio += curParamPath->proposeStart(curVal);
+    propRatio -= random->truncatedNormalPdf(oldest, youngest, oldVal, tuning, curVal);
+    if (curVal > youngest || curVal < oldest) {
+        std::cout << "Proposed new sample time" << std::endl;
+        std::cout << "oldest = " << oldest << ", youngest = " << youngest << std::endl;
+        std::cout << "Allele age = " << curParamPath->get_path()->get_time(0) << std::endl;
+        std::cout << "oldVal = " << oldVal << ", curVal = " << curVal << std::endl;
+        std::cout << "Starting curVal = " << startVal << std::endl;
+        std::cout << "Final curVal = " << curVal << std::endl;
+        std::cout << "propRatio = " << propRatio << std::endl;
+        std::cin.ignore();
+    }
     return propRatio;
 }
 
 double sample_time::prior() {
-    //uniform on [0,1] results in this density on the transformed space
-    double pOld = log(sin(oldVal)) - log(2);
-    double pNew = log(sin(curVal)) - log(2);
-    return pNew - pOld;
     return 0;
 }
 

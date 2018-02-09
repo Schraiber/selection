@@ -85,6 +85,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
                 std::cout << "ERROR: Cannot have uncertain times without inferring allele age. Will be fixed in the future" << std::endl;
                 exit(1);
             }
+            sample_time_vec[i]->set_path(curParamPath);
             pars.push_back(sample_time_vec[i]);
             time_idx.push_back(i);
         }
@@ -136,11 +137,9 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			}
 		}
                 
-		if (curProp < 5+time_idx.size()) {
-			pars[curProp]->increaseProp();
-			propRatio = pars[curProp]->propose();
-			priorRatio = pars[curProp]->prior();
-        }
+		pars[curProp]->increaseProp();
+		propRatio = pars[curProp]->propose();
+		priorRatio = pars[curProp]->prior();
 			
 		oldWF = curWF;
 		curWF = new wfMeasure(random,pars[0]->get());
@@ -168,7 +167,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		
 		if (log(u) < mh) {
 			//accept
-			if (curProp < 4 + time_idx.size()) {
+			if (curProp < pars.size()-1) {
 				pars[curProp]->increaseAccept();
 			}
 			curPath->set_update_begin(0);
@@ -177,7 +176,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			state = "Accept";
 		} else {
 			//reject
-			if (curProp < 4 + time_idx.size()) {
+			if (curProp < pars.size()-1) {
 				pars[curProp]->reset();
 			}
 			curPath->reset();
@@ -203,7 +202,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			tuningFreq = 1000;
 		}
 		if (gen % tuningFreq == 0) {
-			for (int i = 0; i < 4 + time_idx.size(); i++) {
+			for (int i = 0; i < pars.size()-1; i++) {
 				pars[i]->updateTuning();
 			}
 		}
