@@ -46,6 +46,7 @@ settings::settings(int argc, char* const argv[]) {
     a2prop = 1.0;
     ageprop = 10.0;
     endprop = 5.0;
+    timeprop = 1.0;
     pathprop = 10.0;
     a1start = 25.0;
     a2start = 50.0;
@@ -83,7 +84,7 @@ settings::settings(int argc, char* const argv[]) {
 				p = 1;
 				ac += 1;
 				break;
-			case 't':
+			case 'T':
 				num_test = atoi(argv[ac+1]);
 				ac += 2;
 				break;
@@ -247,6 +248,13 @@ std::vector<sample_time*> settings::parse_input_file(MbRandom* r) {
     
     //Sort so in order by current value
     std::sort(sample_time_vec.begin(), sample_time_vec.end());
+    
+    //check that most recent time point is fixed
+    int num_sam = sample_time_vec.size();
+    if (sample_time_vec[num_sam-1]->get_oldest()<sample_time_vec[num_sam-1]->get_youngest()) {
+        std::cout << "ERROR: most recent time point must have no uncertainty" << std::endl;
+        exit(1);
+    }
 
     return sample_time_vec;
 }

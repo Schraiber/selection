@@ -9,11 +9,15 @@
 
 #pragma once
 
+#include <fstream>
+#include <vector>
+
 class wfSamplePath;
 class measure;
 class wienerMeasure;
 class MbRandom;
 class settings;
+class param;
 
 class mcmc {
 
@@ -24,6 +28,9 @@ private:
 	//variables to store
 	double curlnL; 
 	double oldlnL;
+    std::vector<param*> pars;
+    wfSamplePath* curPath;
+
 	
 	MbRandom* random;
 	int num_gen;
@@ -40,6 +47,15 @@ private:
 	
 	int gen;
 	int curProp;
+    
+    //output files
+    std::ofstream paramFile;
+    std::ofstream trajFile;
+    std::ofstream timeFile;
+    
+    //output functions
+    void prepareOutput(bool infer_age, std::vector<int> time_idx);
+    void printState();
 	
 	
 };

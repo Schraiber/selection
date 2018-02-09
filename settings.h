@@ -51,6 +51,7 @@ public:
     double get_a2prop() {return a2prop;};
     double get_ageprop() {return ageprop;};
     double get_endprop() {return endprop;};
+    double get_timeprop() {return timeprop;};
     double get_pathprop() {return pathprop;};
     double get_a1start() {return a1start;};
     double get_a2start() {return a2start;};
@@ -91,6 +92,7 @@ private:
     double ageprop;
     double endprop;
     double pathprop;
+    double timeprop;
     double a1start;
     double a2start;
     bool set_gen;

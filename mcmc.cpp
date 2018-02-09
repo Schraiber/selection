@@ -32,37 +32,24 @@ mcmc::mcmc(settings& mySettings, MbRandom* r) {
 
 void mcmc::no_linked_sites(settings& mySettings) {
 	//open files
-	std::ofstream paramFile;
-	std::ofstream trajFile;
-	std::ofstream timeFile;
 	std::string paramName = mySettings.get_baseName() + ".param";
 	std::string trajName = mySettings.get_baseName() + ".traj";
 	std::string timeName = mySettings.get_baseName() + ".time";
 	paramFile.open(paramName.c_str());
 	trajFile.open(trajName.c_str());
 	timeFile.open(timeName.c_str());
-    
-    //prepare output file
-    if (mySettings.get_infer_age()) {
-        paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\tage\tyt\ttuning.alpha1\ttuning.alpha2\ttuning.age\ttuning.yt" << std::endl;
-    } else {
-        paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2\ty0\tyt\ttuning.alpha1\ttuning.alpha2\ttuning.y0\ttuning.yt" << std::endl;
-    }
 	
 	//initialize wfMeasure
 	wfMeasure* curWF = new wfMeasure(random,0);
 	wfMeasure* oldWF = NULL;
 	curWF->set_num_test(mySettings.get_num_test());
-		
-	//propose initial sample path between the sampled points
-	//wfSamplePath* curPath = new wfSamplePath(mySettings,curWF);
-    
+		    
     //parse the settings
     popsize* myPop = mySettings.parse_popsize_file();
     std::vector<sample_time*> sample_time_vec = mySettings.parse_input_file(random);
     
     //initialize path
-    wfSamplePath* curPath = new wfSamplePath(sample_time_vec, myPop, curWF, mySettings);
+    curPath = new wfSamplePath(sample_time_vec, myPop, curWF, mySettings);
 
 	
 	//propose an allele age
@@ -82,7 +69,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	param_path* curParamPath = new param_path(curPath,alpha1,alpha2,random,mySettings);
 	
 	//initialize the parameter vector
-	std::vector<param*> pars;
+    pars.resize(0);
 	pars.push_back(alpha1);
 	pars.push_back(alpha2);
 	if (!mySettings.get_infer_age()) {
@@ -91,7 +78,21 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		pars.push_back(new param_age(firstAge, random, curParamPath, mySettings.get_dt(), mySettings.get_grid()));
 	}
 	pars.push_back(new end_freq(curPath->get_traj(curPath->get_length()-1), random, curParamPath));
+    std::vector<int> time_idx(0);
+    for (int i = 0; i < sample_time_vec.size()-1; i++) {
+        if (sample_time_vec[i]->get_oldest() < sample_time_vec[i]->get_youngest()) {
+            if (!mySettings.get_infer_age()) {
+                std::cout << "ERROR: Cannot have uncertain times without inferring allele age. Will be fixed in the future" << std::endl;
+                exit(1);
+            }
+            pars.push_back(sample_time_vec[i]);
+            time_idx.push_back(i);
+        }
+    }
 	pars.push_back(curParamPath);
+    
+    //prepare output file
+    prepareOutput(mySettings.get_infer_age(), time_idx);
     
 	//initialize the proposal ratios
 	//probably move this somewhere else
@@ -100,6 +101,9 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	propChance.push_back(mySettings.get_a2prop()); //update alpha2 1
 	propChance.push_back(mySettings.get_ageprop()); //update start/age 2
 	propChance.push_back(mySettings.get_endprop()); //update end 2
+    for (int i = 0; i < time_idx.size(); i++) {
+        propChance.push_back(mySettings.get_timeprop()); //update times 1
+    }
 	propChance.push_back(mySettings.get_pathprop()); //update path 5
 
 	//store as a cdf
@@ -112,6 +116,8 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		cumsum += propChance[i]/sum;
 		propChance[i] = cumsum;
 	}
+    
+    
 	
 	//compute starting lnL
 	curlnL = compute_lnL_sample_only(curPath);
@@ -130,7 +136,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			}
 		}
                 
-		if (curProp < 5) {
+		if (curProp < 5+time_idx.size()) {
 			pars[curProp]->increaseProp();
 			propRatio = pars[curProp]->propose();
 			priorRatio = pars[curProp]->prior();
@@ -162,7 +168,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		
 		if (log(u) < mh) {
 			//accept
-			if (curProp < 4) {
+			if (curProp < 4 + time_idx.size()) {
 				pars[curProp]->increaseAccept();
 			}
 			curPath->set_update_begin(0);
@@ -171,7 +177,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			state = "Accept";
 		} else {
 			//reject
-			if (curProp < 4) {
+			if (curProp < 4 + time_idx.size()) {
 				pars[curProp]->reset();
 			}
 			curPath->reset();
@@ -197,20 +203,14 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			tuningFreq = 1000;
 		}
 		if (gen % tuningFreq == 0) {
-			for (int i = 0; i < 4; i++) {
+			for (int i = 0; i < 4 + time_idx.size(); i++) {
 				pars[i]->updateTuning();
 			}
 		}
 				
         
 		if (gen % sampleFreq == 0) {
-			cbpMeasure testCBP(random);
-			double pathlnL = testCBP.log_girsanov_wf_r(curPath, pars[0]->get(), pars[1]->get(), curPath->get_pop(), 0);
-			paramFile << gen << "\t" << curlnL << "\t" << pathlnL << "\t" << pars[0]->get() << "\t" << pars[1]->get() << "\t" << pars[2]->get() << "\t" << curPath->get_traj(curPath->get_length()-1) << "\t" << pars[0]->getTuning() << "\t" << pars[1]->getTuning() << "\t" << pars[2]->getTuning() << "\t" << pars[3]->getTuning() <<  std::endl;
-			trajFile << gen << " ";
-			curPath->print_traj(trajFile << std::setprecision(20));
-			timeFile << gen << " "; 
-			curPath->print_time(timeFile << std::setprecision(20));
+            printState();
 		}
 	}
 	
@@ -245,5 +245,33 @@ double mcmc::compute_lnL_sample_only(wfSamplePath* p) {
 	}
 	
 	return sample_prob;
+}
+
+void mcmc::prepareOutput(bool infer_age, std::vector<int> time_idx) {
+    paramFile << "gen\tlnL\tpathlnL\talpha1\talpha2";
+    if (infer_age) {
+        paramFile << "\tage";
+    } else {
+        paramFile << "\tstart_freq";
+    }
+    paramFile << "\tend_freq";
+    for (int i = 0; i < time_idx.size(); i++) {
+        paramFile << "\tsample_time_" << time_idx[i];
+    }
+    paramFile << std::endl;
+}
+
+void mcmc::printState() {
+    cbpMeasure testCBP(random);
+    double pathlnL = testCBP.log_girsanov_wf_r(curPath, pars[0]->get(), pars[1]->get(), curPath->get_pop(), 0);
+    paramFile << gen << "\t" << curlnL << "\t" << pathlnL;
+    for (int i = 0; i < pars.size()-1; i++) {
+        paramFile << "\t" << pars[i]->get();
+    }
+    paramFile << std::endl;
+    trajFile << gen << " ";
+    curPath->print_traj(trajFile << std::setprecision(20));
+    timeFile << gen << " ";
+    curPath->print_time(timeFile << std::setprecision(20));
 }
 
