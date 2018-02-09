@@ -399,18 +399,6 @@ path* wienerMeasure::make_bb_from_bm(path* bm,double u, double v) {
 	std::vector<double> p;
 	for (int i = 0; i < bm->get_length(); i++) {
 		double cur_val = (1-(bm->get_time(i)-t0)/(T-t0))*u + (bm->get_time(i)-t0)/(T-t0)*v+bm->get_traj(i)-(bm->get_time(i)-t0)/(T-t0)*bT;
-        if (cur_val != cur_val) {
-//            std::cout << "ERROR in Brownian bridge" << std::endl;
-//            std::cout << "bm->get_time(" << i << ") = " << bm->get_time(i) << std::endl;
-//            std::cout << "bm->get_traj(" << i << ") = " << bm->get_traj(i) << std::endl;
-//            std::cout << "u = " << u << std::endl;
-//            std::cout << "T = " << T << std::endl;
-//            std::cout << "t0 = " << t0 << std::endl;
-//            std::cout << "v = " << v << std::endl;
-//            std::cout << "bT = " << bT << std::endl;
-//            std::cout << "Full trajectory:" << std::endl;
-//            bm->print_traj();
-        }
 		p.push_back(cur_val);
 	}
 	path* bb = new path(p, bm->get_time());
@@ -520,6 +508,7 @@ path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::ve
 			b4_traj[j] += pow(bb_paths[i]->get_traj(j),2);
 			if (b4_traj[j] != b4_traj[j]) {
                 std::cout << "Failing to propose a BES4 bridge from " << x0 << " to " << xt << " during time interval (" << t0 << ", " << t << ")" << std::endl;
+                std::cout << "This likely means that the time vector is getting loopy, possibly due to pileup of points" << std::endl;
                 std::cout << "The " << i << "th Brownian bridge between " << u[i] << " and " << xt*v[i] << " is faulty:" << std::endl;
 				bb_paths[i]->print_traj(std::cout);
 				bb_paths[i]->print_time(std::cout << std::setprecision(20));

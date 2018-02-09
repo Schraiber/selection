@@ -217,9 +217,6 @@ double param_path::proposeStart(double newStart) {
 double param_path::proposeAlleleAge(double newAge, double oldAge) {
 	int end_index;
 	((wfSamplePath*)curPath)->set_update_begin();
-    //end_index = random->poissonRv(2*minUpdate);
-	//end_index=((wfSamplePath*)curPath)->get_sampleTime(((wfSamplePath*)curPath)->get_firstNonzero());
-    //end_index=2*minUpdate;
     if (newAge < oldAge) {
         end_index = 2*minUpdate;
     } else {
@@ -233,17 +230,13 @@ double param_path::proposeAlleleAge(double newAge, double oldAge) {
 	double t0 = newAge;
 	double xt = curPath->get_traj(end_index);
 	double t = curPath->get_time(end_index);
-//	while (t - t0 < 0.0001 && end_index + minUpdate+curPath->get_length()/fracOfPath < curPath->get_length()) {
-//		end_index += minUpdate+curPath->get_length()/fracOfPath;
-//		t = curPath->get_time(end_index);
-//	}
+	while (t - t0 < 0.0001 && end_index + minUpdate+curPath->get_length()/fracOfPath < curPath->get_length()) {
+		end_index += minUpdate+curPath->get_length()/fracOfPath;
+		t = curPath->get_time(end_index);
+	}
 	popsize* rho = ((wfSamplePath*)curPath)->get_pop();
 	std::vector<double> newTimeVector = make_time_vector(newAge, end_index, rho);
-//    std::cout << "end_index is " << end_index << " and length of new guy is " <<  newTimeVector.size() << std::endl;
-//    std::cout << "Time of end_index is " << t << std::endl;
 	double propRatio = proposeAgePath(x0,xt,t0,t,newTimeVector, end_index);
-    //propRatio += random->poissonProb(2*minUpdate,newTimeVector.size());
-    //propRatio -= random->poissonProb(2*minUpdate, end_index);
 	return propRatio;
 }
 
@@ -274,13 +267,6 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
     std::vector<double>::iterator it = std::unique(timesToInclude.begin(), timesToInclude.end());
     timesToInclude.resize( std::distance(timesToInclude.begin(), it) );
     
-//    std::cout << "Times to include: ";
-//    for (int i = 0; i < timesToInclude.size(); i++) {
-//        std::cout << std::setprecision(20) << timesToInclude[i] << " ";
-//    }
-//    std::cout << std::endl;
-
-	
     //create the vector, going between each pair of things
 	std::vector<double> newTimes;
 	int cur_ind = 0;
@@ -288,11 +274,6 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
 	for (int j = 0; j < timesToInclude.size()-1; j++) {
 		double dt = min_dt;
 		int steps = (timesToInclude[j+1]-timesToInclude[j])/dt+1;
-//		if (steps < grid) {
-//			steps = grid;
-//		}
-//		steps += 1;
-//		dt = (timesToInclude[j+1]-timesToInclude[j])/(steps-1);
 		newTimes.push_back(timesToInclude[j]);
 		temp_ind++;
 		for (int i = 1; i < steps - 1; i++) {
