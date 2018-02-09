@@ -39,6 +39,20 @@ void param::updateTuning() {
 	numTunings += 1;
 }
 
+double param::reflectedUniform(double x, double w, double low, double high) {
+    double v;
+    do {
+        v = random->uniformRv(x-w/2.0,x+w/2.0);
+        if (v < low) {
+            v = 2*low-v;
+        }
+        else if (v > high) {
+            v = 2*high-v;
+        }
+    } while (v > high || v < low);
+    return v;
+}
+
 double param_gamma::propose() {
 	oldVal = curVal;
 	curVal = random->normalRv(oldVal,tuning);
@@ -68,12 +82,17 @@ double param_h::prior() {
 }
 
 double start_freq::propose() {
-	//truncated normal
 	oldVal = curVal;
-	curVal = random->truncatedNormalRv(0, PI, oldVal, tuning);
-	double propRatio = random->truncatedNormalPdf(0, PI, curVal, tuning, oldVal);
-	propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
-    propRatio += curParamPath->proposeStart(curVal);
+    
+    //OLD: truncated normal
+//	curVal = random->truncatedNormalRv(0, PI, oldVal, tuning);
+//	double propRatio = random->truncatedNormalPdf(0, PI, curVal, tuning, oldVal);
+//	propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
+//  propRatio += curParamPath->proposeStart(curVal);
+
+    //NEW: reflected uniform
+    curVal = reflectedUniform(oldVal, tuning, 0, PI);
+    double propRatio = 0;
 	return propRatio;
 }
 
@@ -90,7 +109,10 @@ double sample_time::propose() {
     //truncated normal
     oldVal = curVal;
     old_idx = cur_idx;
-    curVal = random->truncatedNormalRv(oldest, youngest, oldVal, tuning);
+    //OLD: truncated normal
+    //curVal = random->truncatedNormalRv(oldest, youngest, oldVal, tuning);
+    //NEW: reflected uniform
+    curVal = reflectedUniform(oldVal, tuning, oldest, youngest);
     double startVal = curVal;
     //Shift to closest value that's actually in the path
     //HOW BAD IS THIS IDEA???
@@ -137,8 +159,11 @@ double sample_time::propose() {
     if (cur_idx!=-1) {
         ((wfSamplePath*)curParamPath->get_path())->updateFirstNonzero(curVal);
     }
-    double propRatio = random->truncatedNormalPdf(oldest, youngest, curVal, tuning, oldVal);
-    propRatio -= random->truncatedNormalPdf(oldest, youngest, oldVal, tuning, curVal);
+    //OLD: truncated normal
+    //double propRatio = random->truncatedNormalPdf(oldest, youngest, curVal, tuning, oldVal);
+    //propRatio -= random->truncatedNormalPdf(oldest, youngest, oldVal, tuning, curVal);
+    //NEW: refelcted uniform
+    double propRatio = 0;
     if (curVal > youngest || curVal < oldest) {
         std::cout << "Proposed new sample time" << std::endl;
         std::cout << "oldest = " << oldest << ", youngest = " << youngest << std::endl;
@@ -159,10 +184,13 @@ double sample_time::prior() {
 double param_age::propose() {
 	oldVal = curVal;
 	double topTime = ((wfSamplePath*)(curParamPath->get_path()))->get_firstNonzero();
-	curVal = random->truncatedHalfNormalRv(topTime, 0, oldVal, tuning);
-//  std::cout << "Vals: " << oldVal << " " << curVal << std::endl;
-	double propRatio = log(random->truncatedHalfNormalPdf(topTime, 0, curVal, tuning, oldVal));
-	propRatio -= log(random->truncatedHalfNormalPdf(topTime, 0, oldVal, tuning, curVal));
+    //OLD: truncated normal
+	//curVal = random->truncatedHalfNormalRv(topTime, 0, oldVal, tuning);
+	//double propRatio = log(random->truncatedHalfNormalPdf(topTime, 0, curVal, tuning, oldVal));
+	//propRatio -= log(random->truncatedHalfNormalPdf(topTime, 0, oldVal, tuning, curVal));
+    //NEW: reflected uniform
+    curVal = reflectedUniform(oldVal, tuning, -INFINITY, topTime);
+    double propRatio = 0;
 	if (propRatio != propRatio) {
 		std::cout << "ERROR: Proposal ratio is nan! Debugging information:" << std::endl;
 		std::cout << "oldVal: " << oldVal << " curVal: " << curVal << " tuning " << tuning << std::endl;

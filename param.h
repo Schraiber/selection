@@ -47,6 +47,10 @@ protected:
 	int numAccept;
 	int numTunings;
 	MbRandom* random;
+    
+    //draw a reflected uniform RV
+    //centered at x, of width w, but constrained to be between low and high
+    double reflectedUniform(double x, double w, double low, double high);
 	
 };
 
