@@ -16,6 +16,7 @@
 #include "popsize.h"
 
 #include <algorithm>
+#include <iomanip>
 
 void param::updateTuning() {
 	if (numProp > 0) {
@@ -149,7 +150,7 @@ double param_age::propose() {
 	int topTimeInd = ((wfSamplePath*)curParamPath->get_path())->get_firstNonzero();
 	double topTime = ((wfSamplePath*)curParamPath->get_path())->get_sampleTimeValue(topTimeInd);
 	curVal = random->truncatedHalfNormalRv(topTime, 0, oldVal, tuning);
-//	std::cout << oldVal << " " << curVal << std::endl << std::endl; 
+//  std::cout << "Vals: " << oldVal << " " << curVal << std::endl;
 	double propRatio = log(random->truncatedHalfNormalPdf(topTime, 0, curVal, tuning, oldVal));
 	propRatio -= log(random->truncatedHalfNormalPdf(topTime, 0, oldVal, tuning, curVal));
 	if (propRatio != propRatio) {
@@ -158,7 +159,7 @@ double param_age::propose() {
 		std::cout << "log(P(theta | theta')) = " << log(random->truncatedHalfNormalPdf(topTime, 0, curVal, tuning, oldVal)) << std::endl;
 		std::cout << "log(P(theta' | theta)) = " << log(random->truncatedHalfNormalPdf(topTime, 0, oldVal, tuning, curVal)) << std::endl;
 	}
-	propRatio += curParamPath->proposeAlleleAge(curVal);
+	propRatio += curParamPath->proposeAlleleAge(curVal, oldVal);
 	return propRatio;
 }
 
@@ -213,26 +214,36 @@ double param_path::proposeStart(double newStart) {
 }
 
 //updates from the beginning
-double param_path::proposeAlleleAge(double newAge) {
+double param_path::proposeAlleleAge(double newAge, double oldAge) {
 	int end_index;
 	((wfSamplePath*)curPath)->set_update_begin();
     //end_index = random->poissonRv(2*minUpdate);
 	//end_index=((wfSamplePath*)curPath)->get_sampleTime(((wfSamplePath*)curPath)->get_firstNonzero());
-    end_index=2*minUpdate;
+    //end_index=2*minUpdate;
+    if (newAge < oldAge) {
+        end_index = 2*minUpdate;
+    } else {
+        end_index = 0;
+        while (curPath->get_time(end_index) < newAge) {
+            end_index++;
+        }
+        end_index += 2*minUpdate;
+    }
 	double x0 = fOrigin; 
 	double t0 = newAge;
 	double xt = curPath->get_traj(end_index);
 	double t = curPath->get_time(end_index);
-	while (t - t0 < 0.0001 && end_index + minUpdate+curPath->get_length()/fracOfPath < curPath->get_length()) {
-		end_index += minUpdate+curPath->get_length()/fracOfPath;
-		t = curPath->get_time(end_index);
-	}
+//	while (t - t0 < 0.0001 && end_index + minUpdate+curPath->get_length()/fracOfPath < curPath->get_length()) {
+//		end_index += minUpdate+curPath->get_length()/fracOfPath;
+//		t = curPath->get_time(end_index);
+//	}
 	popsize* rho = ((wfSamplePath*)curPath)->get_pop();
 	std::vector<double> newTimeVector = make_time_vector(newAge, end_index, rho);
-    std::cout << "end_index is " << end_index << " and length of new guy is " <<  newTimeVector.size() << std::endl;
+//    std::cout << "end_index is " << end_index << " and length of new guy is " <<  newTimeVector.size() << std::endl;
+//    std::cout << "Time of end_index is " << t << std::endl;
 	double propRatio = proposeAgePath(x0,xt,t0,t,newTimeVector, end_index);
-    propRatio += random->poissonProb(2*minUpdate,newTimeVector.size());
-    propRatio -= random->poissonProb(2*minUpdate, end_index);
+    //propRatio += random->poissonProb(2*minUpdate,newTimeVector.size());
+    //propRatio -= random->poissonProb(2*minUpdate, end_index);
 	return propRatio;
 }
 
@@ -262,6 +273,12 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
     //ensure uniqueness
     std::vector<double>::iterator it = std::unique(timesToInclude.begin(), timesToInclude.end());
     timesToInclude.resize( std::distance(timesToInclude.begin(), it) );
+    
+//    std::cout << "Times to include: ";
+//    for (int i = 0; i < timesToInclude.size(); i++) {
+//        std::cout << std::setprecision(20) << timesToInclude[i] << " ";
+//    }
+//    std::cout << std::endl;
 
 	
     //create the vector, going between each pair of things
@@ -271,11 +288,11 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
 	for (int j = 0; j < timesToInclude.size()-1; j++) {
 		double dt = min_dt;
 		int steps = (timesToInclude[j+1]-timesToInclude[j])/dt+1;
-		if (steps < grid) {
-			steps = grid;
-		}
-		steps += 1;
-		dt = (timesToInclude[j+1]-timesToInclude[j])/(steps-1);
+//		if (steps < grid) {
+//			steps = grid;
+//		}
+//		steps += 1;
+//		dt = (timesToInclude[j+1]-timesToInclude[j])/(steps-1);
 		newTimes.push_back(timesToInclude[j]);
 		temp_ind++;
 		for (int i = 1; i < steps - 1; i++) {
@@ -357,7 +374,6 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 	oldPath = curPath->extract_path(0,end_index+1);
 	double tOld = rho->getTau(oldPath->get_time(oldPath->get_length()-1))-rho->getTau(oldPath->get_time(1));
 	double tNew = newPath->get_time(newPath->get_length()-1)-newPath->get_time(1);
-	
 	
 	newPath->replace_time(time_vec);
 	((wfSamplePath*)curPath)->set_allele_age(t0, newPath, end_index);
