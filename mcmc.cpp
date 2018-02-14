@@ -149,7 +149,10 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		
 		double LLRatio = curlnL-oldlnL;
         if (curlnL != curlnL || oldlnL != oldlnL) {
-            std::cout << curlnL << " " << oldlnL << std::endl;
+            std::cout << "ERROR: likelihood is nan!" << std::endl;
+            std::cout << "Generation = " << gen << std::endl;
+            std::cout << "Proposal = " << curProp << std::endl;
+            std::cout << "curlnL = " << curlnL << ", oldlnL = " << oldlnL << std::endl;
             exit(1);
         }
 		if (curProp == 0 || curProp == 1) {

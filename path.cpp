@@ -279,14 +279,6 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
     std::vector<double>::iterator it = std::unique(breakPoints.begin(), breakPoints.end());
     breakPoints.resize( std::distance(breakPoints.begin(), it) );
     
-//    for (int i = 0; i < num_samples-1; i++) {
-//        std::vector<double> curBreaks = myPop->getBreakTimes(sample_time_vec[i]->get(),sample_time_vec[i+1]->get());
-//        for (int j = 0; j < curBreaks.size()-1; j++) {
-//            breakPoints.push_back(curBreaks[j]);
-//        }
-//    }
-//    breakPoints.push_back(sample_time_vec[sample_time_vec.size()-1]->get());
-    
     
     //create the time vector
     double dt = s.get_dt();
