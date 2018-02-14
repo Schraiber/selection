@@ -259,14 +259,33 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
         }
     }
     
+    //get the times to include
     std::vector<double> breakPoints;
-    for (int i = 0; i < num_samples-1; i++) {
-        std::vector<double> curBreaks = myPop->getBreakTimes(sample_time_vec[i]->get(),sample_time_vec[i+1]->get());
-        for (int j = 0; j < curBreaks.size()-1; j++) {
-            breakPoints.push_back(curBreaks[j]);
-        }
+    for (int i =0; i < num_samples; i++) {
+        breakPoints.push_back(sample_time_vec[i]->get_youngest());
+        breakPoints.push_back(sample_time_vec[i]->get());
+        breakPoints.push_back(sample_time_vec[i]->get_oldest());
     }
-    breakPoints.push_back(sample_time_vec[sample_time_vec.size()-1]->get());
+    
+    std::vector<double> curBreaks = myPop->getBreakTimes(first_nonzero, sample_time_vec[num_samples-1]->get_youngest());
+    
+    for (int j = 0; j < curBreaks.size()-1; j++) {
+        breakPoints.push_back(curBreaks[j]);
+    }
+    
+    //sort
+    std::sort(breakPoints.begin(), breakPoints.end());
+    //ensure uniqueness
+    std::vector<double>::iterator it = std::unique(breakPoints.begin(), breakPoints.end());
+    breakPoints.resize( std::distance(breakPoints.begin(), it) );
+    
+//    for (int i = 0; i < num_samples-1; i++) {
+//        std::vector<double> curBreaks = myPop->getBreakTimes(sample_time_vec[i]->get(),sample_time_vec[i+1]->get());
+//        for (int j = 0; j < curBreaks.size()-1; j++) {
+//            breakPoints.push_back(curBreaks[j]);
+//        }
+//    }
+//    breakPoints.push_back(sample_time_vec[sample_time_vec.size()-1]->get());
     
     
     //create the time vector
