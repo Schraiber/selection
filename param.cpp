@@ -56,9 +56,10 @@ double param::reflectedUniform(double x, double w, double low, double high) {
 double param_gamma::propose() {
 	oldVal = curVal;
 	curVal = random->normalRv(oldVal,tuning);
-	double qOld = -1.0/2.0*log(2*PI*tuning*tuning) - (oldVal-curVal)*(oldVal-curVal)/(2.0*tuning*tuning);
-	double qNew = -1.0/2.0*log(2*PI*tuning*tuning) - (curVal-oldVal)*(curVal-oldVal)/(2.0*tuning*tuning);
-	return qOld-qNew;
+	//double qOld = -1.0/2.0*log(2*PI*tuning*tuning) - (oldVal-curVal)*(oldVal-curVal)/(2.0*tuning*tuning);
+	//double qNew = -1.0/2.0*log(2*PI*tuning*tuning) - (curVal-oldVal)*(curVal-oldVal)/(2.0*tuning*tuning);
+	//return qOld-qNew;
+    return 0;
 }
 
 double param_gamma::prior() {
@@ -84,15 +85,18 @@ double param_h::prior() {
 double start_freq::propose() {
 	oldVal = curVal;
     
+    double propRatio = 0;
+    
     //OLD: truncated normal
-	curVal = random->truncatedNormalRv(0, PI, oldVal, tuning);
-	double propRatio = random->truncatedNormalPdf(0, PI, curVal, tuning, oldVal);
-	propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
+	//curVal = random->truncatedNormalRv(0, PI, oldVal, tuning);
+	//double propRatio = random->truncatedNormalPdf(0, PI, curVal, tuning, oldVal);
+	//propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
+    
     propRatio += curParamPath->proposeStart(curVal);
 
     //NEW: reflected uniform
-    //curVal = reflectedUniform(oldVal, tuning, 0, PI);
-    //double propRatio = 0;
+    curVal = reflectedUniform(oldVal, tuning, 0, PI);
+    propRatio += 0;
 	
     return propRatio;
 }
@@ -110,10 +114,13 @@ double sample_time::propose() {
     //truncated normal
     oldVal = curVal;
     old_idx = cur_idx;
+    
     //OLD: truncated normal
     curVal = random->truncatedNormalRv(oldest, youngest, oldVal, tuning);
+    
     //NEW: reflected uniform
     //curVal = reflectedUniform(oldVal, tuning, oldest, youngest);
+    
     double startVal = curVal;
     //Shift to closest value that's actually in the path
     //HOW BAD IS THIS IDEA???
@@ -162,11 +169,11 @@ double sample_time::propose() {
     }
     
     //OLD: truncated normal
-    double propRatio = random->truncatedNormalPdf(oldest, youngest, curVal, tuning, oldVal);
-    propRatio -= random->truncatedNormalPdf(oldest, youngest, oldVal, tuning, curVal);
+    //double propRatio = random->truncatedNormalPdf(oldest, youngest, curVal, tuning, oldVal);
+    //propRatio -= random->truncatedNormalPdf(oldest, youngest, oldVal, tuning, curVal);
     
     //NEW: refelcted uniform
-    //double propRatio = 0;
+    double propRatio = 0;
     if (curVal > youngest || curVal < oldest) {
         std::cout << "Proposed new sample time" << std::endl;
         std::cout << "oldest = " << oldest << ", youngest = " << youngest << std::endl;
