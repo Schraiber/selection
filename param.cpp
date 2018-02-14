@@ -49,7 +49,7 @@ double param::reflectedUniform(double x, double w, double low, double high) {
         else if (v > high) {
             v = 2*high-v;
         }
-    } while (v > high || v < low);
+    } while (v < low || v > high);
     return v;
 }
 
@@ -85,15 +85,16 @@ double start_freq::propose() {
 	oldVal = curVal;
     
     //OLD: truncated normal
-//	curVal = random->truncatedNormalRv(0, PI, oldVal, tuning);
-//	double propRatio = random->truncatedNormalPdf(0, PI, curVal, tuning, oldVal);
-//	propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
-//  propRatio += curParamPath->proposeStart(curVal);
+	curVal = random->truncatedNormalRv(0, PI, oldVal, tuning);
+	double propRatio = random->truncatedNormalPdf(0, PI, curVal, tuning, oldVal);
+	propRatio -= random->truncatedNormalPdf(0, PI, oldVal, tuning, curVal);
+    propRatio += curParamPath->proposeStart(curVal);
 
     //NEW: reflected uniform
-    curVal = reflectedUniform(oldVal, tuning, 0, PI);
-    double propRatio = 0;
-	return propRatio;
+    //curVal = reflectedUniform(oldVal, tuning, 0, PI);
+    //double propRatio = 0;
+	
+    return propRatio;
 }
 
 double start_freq::prior() {
@@ -110,9 +111,9 @@ double sample_time::propose() {
     oldVal = curVal;
     old_idx = cur_idx;
     //OLD: truncated normal
-    //curVal = random->truncatedNormalRv(oldest, youngest, oldVal, tuning);
+    curVal = random->truncatedNormalRv(oldest, youngest, oldVal, tuning);
     //NEW: reflected uniform
-    curVal = reflectedUniform(oldVal, tuning, oldest, youngest);
+    //curVal = reflectedUniform(oldVal, tuning, oldest, youngest);
     double startVal = curVal;
     //Shift to closest value that's actually in the path
     //HOW BAD IS THIS IDEA???
@@ -159,11 +160,13 @@ double sample_time::propose() {
     if (cur_idx!=-1) {
         ((wfSamplePath*)curParamPath->get_path())->updateFirstNonzero(curVal);
     }
+    
     //OLD: truncated normal
-    //double propRatio = random->truncatedNormalPdf(oldest, youngest, curVal, tuning, oldVal);
-    //propRatio -= random->truncatedNormalPdf(oldest, youngest, oldVal, tuning, curVal);
+    double propRatio = random->truncatedNormalPdf(oldest, youngest, curVal, tuning, oldVal);
+    propRatio -= random->truncatedNormalPdf(oldest, youngest, oldVal, tuning, curVal);
+    
     //NEW: refelcted uniform
-    double propRatio = 0;
+    //double propRatio = 0;
     if (curVal > youngest || curVal < oldest) {
         std::cout << "Proposed new sample time" << std::endl;
         std::cout << "oldest = " << oldest << ", youngest = " << youngest << std::endl;
@@ -181,16 +184,23 @@ double sample_time::prior() {
     return 0;
 }
 
+void sample_time::updateTuning() {
+    param::updateTuning();
+    if (tuning > youngest-oldest) {
+        tuning = youngest-oldest;
+    }
+}
+
 double param_age::propose() {
 	oldVal = curVal;
 	double topTime = ((wfSamplePath*)(curParamPath->get_path()))->get_firstNonzero();
     //OLD: truncated normal
-	//curVal = random->truncatedHalfNormalRv(topTime, 0, oldVal, tuning);
-	//double propRatio = log(random->truncatedHalfNormalPdf(topTime, 0, curVal, tuning, oldVal));
-	//propRatio -= log(random->truncatedHalfNormalPdf(topTime, 0, oldVal, tuning, curVal));
+	curVal = random->truncatedHalfNormalRv(topTime, 0, oldVal, tuning);
+	double propRatio = log(random->truncatedHalfNormalPdf(topTime, 0, curVal, tuning, oldVal));
+	propRatio -= log(random->truncatedHalfNormalPdf(topTime, 0, oldVal, tuning, curVal));
     //NEW: reflected uniform
-    curVal = reflectedUniform(oldVal, tuning, -INFINITY, topTime);
-    double propRatio = 0;
+    //curVal = reflectedUniform(oldVal, tuning, -INFINITY, topTime);
+    //double propRatio = 0;
 	if (propRatio != propRatio) {
 		std::cout << "ERROR: Proposal ratio is nan! Debugging information:" << std::endl;
 		std::cout << "oldVal: " << oldVal << " curVal: " << curVal << " tuning " << tuning << std::endl;
@@ -346,18 +356,17 @@ double param_path::propose(double x0, double xt, double t0, double t, std::vecto
 	double tau = rho->getTau(t);
 	
 	
-	measure* myCBP;
+	cbpMeasure myCBP(random);
 	double dist_from_0 = x0;
 	if (xt < x0) dist_from_0 = xt;
 	double dist_from_pi = PI-xt;
 	if (PI-x0 < PI-xt) dist_from_pi = PI-x0;
-	myCBP = new cbpMeasure(random);
 //	if (dist_from_0 < dist_from_pi) {
 //		myCBP = new cbpMeasure(random);
 //	} else {
 //		myCBP = new flippedCbpMeasure(random);
 //	}
-	newPath = myCBP->prop_bridge(x0, xt, tau0, tau,tau_vec);
+	newPath = myCBP.prop_bridge(x0, xt, tau0, tau,tau_vec);
 	oldPath = curPath->extract_path(start_index, end_index+1);
 	
 	newPath->replace_time(time_vec);
@@ -366,11 +375,10 @@ double param_path::propose(double x0, double xt, double t0, double t, std::vecto
 	double propRatio = 0;
 	
 	//compute the likelihood ratio of current path under WF measure relative to CBP measure
-	propRatio += myCBP->log_girsanov_wf_r(newPath, a1->get(), a2->get(),rho, 1);
-	propRatio -= myCBP->log_girsanov_wf_r(oldPath, a1->get(), a2->get(),rho, 1);
+	propRatio += myCBP.log_girsanov_wf_r(newPath, a1->get(), a2->get(),rho, 1);
+	propRatio -= myCBP.log_girsanov_wf_r(oldPath, a1->get(), a2->get(),rho, 1);
 	
 	
-	delete myCBP;
 	delete newPath;
 	delete oldPath;
 	
@@ -384,9 +392,8 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 	double tau0 = rho->getTau(t0);
 	double tau = rho->getTau(t);
 	
-	measure* myCBP;
-	myCBP = new cbpMeasure(random); 
-	newPath = myCBP->prop_bridge(x0, xt, tau0, tau, tau_vec);
+	cbpMeasure myCBP(random);
+	newPath = myCBP.prop_bridge(x0, xt, tau0, tau, tau_vec);
 	
 	//these things, for computing the probability of the Bessel guy making it
 	//should be in units of tau, so need to transform oldPath
@@ -401,8 +408,8 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 	
 	//compute the likelihood ratio of current path under WF measure relative to CBP measure
 	//NB: These ARE bridges but I want to compute the thing myself!
-	propRatio += myCBP->log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0);
-	propRatio -= myCBP->log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0);
+	propRatio += myCBP.log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0);
+	propRatio -= myCBP.log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0);
 	
 	propRatio += -1.0/2.0*xt*xt*(1.0/tNew-1.0/tOld)+2*log(tOld)-2*log(tNew);
 	
@@ -411,11 +418,11 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 		std::cerr << "New path:" << std::endl;
 		newPath->print_traj(std::cerr);
 		newPath->print_time(std::cerr);
-		std::cerr << myCBP->log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0) << std::endl;
+		std::cerr << myCBP.log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0) << std::endl;
 		std::cerr << "Old path:" << std::endl;
 		oldPath->print_traj(std::cerr);
 		oldPath->print_time(std::cerr);
-		std::cerr << myCBP->log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0) << std::endl;
+		std::cerr << myCBP.log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0) << std::endl;
 		std::cerr << "Times New Old" << std::endl;
 		std::cerr << tNew << " " << tOld << std::endl;
 		std::cerr << "Time likelihood ratio" << std::endl;
@@ -423,7 +430,6 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 		exit(1);
 	}
 	
-	delete myCBP;
 	delete newPath;
 	delete oldPath;
 	
