@@ -92,6 +92,7 @@ public:
 	double get_sampleFreq(int i);
 	double get_firstNonzero();
     double get_sampleTimeValue(int i);
+    sample_time* get_sampleTimeObj(int i);
     
     //change sample aspects
     void updateFirstNonzero(double t);

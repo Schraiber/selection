@@ -416,6 +416,10 @@ double wfSamplePath::get_sampleTimeValue(int i) {
     return sample_time_vec[i]->get();
 }
 
+sample_time* wfSamplePath::get_sampleTimeObj(int i) {
+    return sample_time_vec[i];
+}
+
 void wfSamplePath::updateFirstNonzero(double t) {
     old_first_nonzero = first_nonzero;
     first_nonzero = t;

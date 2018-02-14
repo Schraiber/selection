@@ -148,6 +148,7 @@ double sample_time::propose() {
     } else {
         //if greater than, go up
         for (int i = old_idx; i < curParamPath->get_path()->get_length(); i++) {
+            if (i == -1) continue;
             if (curParamPath->get_path()->get_time(i) > curVal) {
                 double up_time = curParamPath->get_path()->get_time(i);
                 double down_time = curParamPath->get_path()->get_time(i-1);
@@ -181,6 +182,7 @@ double sample_time::propose() {
         std::cout << "oldVal = " << oldVal << ", curVal = " << curVal << std::endl;
         std::cout << "Starting curVal = " << startVal << std::endl;
         std::cout << "Final curVal = " << curVal << std::endl;
+        std::cout << "old_idx = " << old_idx << std::endl;
         std::cout << "propRatio = " << propRatio << std::endl;
         std::cin.ignore();
     }
@@ -295,7 +297,7 @@ double param_path::proposeAlleleAge(double newAge, double oldAge) {
 	return propRatio;
 }
 
-//this makes a time vector that hits the sample times
+//this makes a time vector that hits the sample times and their boundaries
 std::vector<double> param_path::make_time_vector(double newAge, int end_index, popsize* rho) {
 	//figure out which times you need to include
 	std::vector<double> timesToInclude;
@@ -303,11 +305,18 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
     
     //go through times to get which ones are in between
     double endTime = ((wfSamplePath*)curPath)->get_time(end_index);
+    double curTime;
+    double oldTime;
+    double youngTime;
+    sample_time* curSampleTime;
     for (int i = 0; i < ((wfSamplePath*)curPath)->get_num_samples(); i++) {
-        double curTime = ((wfSamplePath*)curPath)->get_sampleTimeValue(i);
-        if (curTime >= newAge && curTime <= endTime) {
-            timesToInclude.push_back(curTime);
-        }
+        curSampleTime = ((wfSamplePath*)curPath)->get_sampleTimeObj(i);
+        oldTime = curSampleTime->get_oldest();
+        curTime = curSampleTime->get();
+        youngTime = curSampleTime->get_youngest();
+        if (curTime >= newAge && curTime <= endTime) timesToInclude.push_back(curTime);
+        if (oldTime >= newAge && oldTime <= endTime) timesToInclude.push_back(oldTime);
+        if (youngTime >= newAge && youngTime <= endTime) timesToInclude.push_back(youngTime);
     }
 
     //generate the break times
