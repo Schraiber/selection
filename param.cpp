@@ -175,7 +175,7 @@ double sample_time::propose() {
     
     //NEW: refelcted uniform
     double propRatio = 0;
-    if (curVal > youngest || curVal < oldest) {
+    if (1) { //curVal > youngest || curVal < oldest) {
         std::cout << "Proposed new sample time" << std::endl;
         std::cout << "oldest = " << oldest << ", youngest = " << youngest << std::endl;
         std::cout << "Allele age = " << curParamPath->get_path()->get_time(0) << std::endl;
