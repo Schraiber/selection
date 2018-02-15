@@ -472,3 +472,13 @@ void param_age::reset() {
     curVal = oldVal;
     ((wfSamplePath*)curParamPath->get_path())->resetBeginning();
 }
+
+void end_freq::reset() {
+    curVal = oldVal;
+    ((wfSamplePath*)curParamPath->get_path())->resetIntermediate();
+}
+
+void start_freq::reset() {
+    curVal = oldVal;
+    ((wfSamplePath*)curParamPath->get_path())->resetIntermediate();
+}

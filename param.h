@@ -109,7 +109,9 @@ class start_freq: public param {
 public:
     start_freq(double x, MbRandom* r, param_path* p): param(x, r) {curParamPath = p; minTuning=0.0;};
 	double propose();
-	double prior(); 
+	double prior();
+    
+    void reset();
 	
 private:
 	param_path* curParamPath;
@@ -121,6 +123,8 @@ public:
     end_freq(double x, MbRandom* r, param_path* p): param(x, r) {curParamPath = p; minTuning=3.14/500.;};
 	double propose();
 	double prior();
+    
+    void reset();
 	
 private:
 	param_path* curParamPath;

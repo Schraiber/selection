@@ -387,7 +387,6 @@ void wfSamplePath::set_allele_age(double a, path* p, int i) {
     }
 //    std::cout << std::endl;
 
-
 }
 
 

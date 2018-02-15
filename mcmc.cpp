@@ -187,10 +187,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		double mh = LLRatio+propRatio+priorRatio;
 		u = random->uniformRv();
 		
-		if (gen % printFreq == 0) {
-			std::cout << gen << " " << curProp;
-			std::cout << std::setprecision(10) <<  " " << oldlnL << " -> " << curlnL << " " << LLRatio << " " << propRatio << " " << priorRatio << " " << mh << " " << log(u) << " ";
-		}
+
 		
 		if (log(u) < mh) {
 			//accept
@@ -215,9 +212,11 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		}
 	
 		
-		if (gen % printFreq == 0) {
-			std::cout << state << std::endl;
-		}
+        if (gen % printFreq == 0) {
+            std::cout << gen << " " << curProp;
+            std::cout << std::setprecision(10) <<  " " << oldlnL << " -> " << curlnL << " " << LLRatio << " " << propRatio << " " << priorRatio << " " << mh << " " << log(u) << " " << state << std::endl;
+        }
+
         
         for (int i = 0; i < sample_time_vec.size(); i++) {
             double curTime = sample_time_vec[i]->get();
