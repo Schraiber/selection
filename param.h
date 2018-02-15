@@ -129,7 +129,13 @@ private:
 //if sample times are uncertain
 class sample_time: public param {
 public:
-    sample_time(double x, double anc, double rec, int ss, int sc, MbRandom* r): param(x, r) {oldest = anc; youngest = rec; sample_size = ss; sample_count = sc; tuning = (youngest-oldest)/2.0;};
+    sample_time(double x, double anc, double rec, int ss, int sc, MbRandom* r): param(x, r) {
+        oldest = anc;
+        youngest = rec;
+        sample_size = ss;
+        sample_count = sc;
+        tuning = (youngest-oldest)/2.0;
+    };
     
     double get_ss() {return sample_size;};
     double get_sc() {return sample_count;};
@@ -190,6 +196,8 @@ public:
 	};
 	double propose();
 	double prior();
+    
+    void reset();
 	
 private:
 	param_path* curParamPath;

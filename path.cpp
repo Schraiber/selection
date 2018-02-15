@@ -207,7 +207,7 @@ double wfSamplePath::sampleProb(int i) {
     double sc = sample_time_vec[i]->get_sc();
     double ss = sample_time_vec[i]->get_ss();
 	double sp = 0;
-	if (idx != -1) {
+	if (idx != -1 && idx != 0) {
 		sp += lgamma(ss+1)-lgamma(sc+1)-lgamma(ss-sc+1);
 		sp += sc*log((1.0-cos(trajectory[idx]))/2.0);
 		sp += (ss-sc)*log(1-(1.0-cos(trajectory[idx]))/2.0);
@@ -340,7 +340,8 @@ wfSamplePath::~wfSamplePath() {
 
 void wfSamplePath::set_allele_age(double a, path* p, int i) {
 	int j = 0;
-	int k = 0;
+    int oldLength = time.size();
+    double endTimeUpdate = p->get_time(p->get_length()-1);
 	old_age = allele_age;
 	allele_age = a;
 	old_begin_traj = this->get_traj(0,i);
@@ -354,53 +355,85 @@ void wfSamplePath::set_allele_age(double a, path* p, int i) {
 	}
 	trajectory = tempTraj;
 	time = tempTime;
-	
-	// for sample times that are older than the allele, set the index to -1
-	// for others, reindex
-	k = 0;
-	for (j = 0; j < sample_time_vec.size(); j++) {
-		if (sample_time_vec[j]->get() < allele_age) {
-			sample_time_vec[j]->set_idx(-1);
-			continue;
-		}
-		while (k < time.size()) {
-			if (sample_time_vec[j]->get() == time[k]) {
-				sample_time_vec[j]->set_idx(k);
-				k++;
-				break;
-			} else {
-				k++;
-			}
-		}
-	}
+    int newLength = time.size();
+    int lengthDif = newLength - oldLength;
+    
+    //go through sample times to update index
+    std::vector<double>::iterator search_it;
+    int new_idx;
+//    std::cout << "old_age = " << old_age << ", allele_age = " << allele_age << std::endl << std::endl;
+    for (int j = 0; j < sample_time_vec.size(); j++) {
+//        std::cout << "Checking sample time " << j << std::endl;
+//        std::cout << "Current time = " << sample_time_vec[j]->get() << std::endl;
+//        std::cout << "Current index = " << sample_time_vec[j]->get_idx() << std::endl;
+        if (sample_time_vec[j]->get() < allele_age) {
+            //if it's older than the allele age, just set idx to -1
+            sample_time_vec[j]->set_idx(-1);
+        } else if (sample_time_vec[j]->get() < endTimeUpdate) {
+            //if it's part of the new trajectory, find where it is
+            search_it = std::lower_bound(time.begin(),time.end(),sample_time_vec[j]->get());
+            if (search_it == time.end() && sample_time_vec[j]->get() != time[time.size()-1]) {
+                std::cout << "ERROR: could not find sample time index " << j << " with value " << sample_time_vec[j]->get() << " in time vector!" << std::endl;
+            }
+            new_idx = search_it-time.begin();
+            sample_time_vec[j]->set_idx(new_idx);
+        } else {
+            //otherwise, just update the position by adding!
+            new_idx = sample_time_vec[j]->get_idx() + lengthDif;
+            sample_time_vec[j]->set_idx(new_idx);
+        }
+//        std::cout << "Updated time = " << sample_time_vec[j]->get() << std::endl;
+//        std::cout << "Updated index = " << sample_time_vec[j]->get_idx() << std::endl;
+    }
+//    std::cout << std::endl;
+
 
 }
 
-void wfSamplePath::reset() {
-	if (!update_begin && old_index != -1) {
-		//if I didn't update the beginning I can just replace the old stuff directly
-		for (int j = 0; j < old_trajectory.size(); j++) {
-			trajectory[old_index+j] = old_trajectory[j];
-			time[old_index+j] = old_time[j];
-		}
-		old_index = -1;
-	} else if (update_begin) {
-		//if I did update the begining, I need to prepend the old begining to the rest of the path!
-		allele_age = old_age;
-		std::vector<double> tempTraj = old_begin_traj;
-		std::vector<double> tempTime = old_begin_time;
-		for (int j = old_index+1; j < trajectory.size(); j++) {
-			tempTraj.push_back(trajectory[j]);
-			tempTime.push_back(time[j]);
-		}
-		trajectory = tempTraj;
-		time = tempTime;
-		//also need to reset a bunch of other stuff
-        for (int i = 0; i < sample_time_vec.size(); i++) {
-            sample_time_vec[i]->reset_idx();
-        }
 
-	}
+
+void wfSamplePath::resetIntermediate() {
+    //check some things
+    if (update_begin) {
+        std::cout << std::endl << "ERROR: Trying to reset an intermediate part of the path, but allele age was updated!" << std::endl;
+        exit(1);
+    }
+    if (old_index == -1) {
+        std::cout << std::endl << "ERROR: Trying to reset an intermdiate part of the path, but old_index = -1!" << std::endl;
+        exit(1);
+    }
+    //replace the trajectory
+    for (int j = 0; j < old_trajectory.size(); j++) {
+        trajectory[old_index+j] = old_trajectory[j];
+        time[old_index+j] = old_time[j];
+    }
+    old_index = -1;
+}
+
+void wfSamplePath::resetBeginning() {
+    //check some things
+    if (!update_begin) {
+        std::cout << std::endl << "ERROR: Trying to reset the beginning of the path, but allele age wasn't updated!" << std::endl;
+        exit(1);
+    }
+    
+    //prepend the old begining to the rest of the path
+    allele_age = old_age;
+    std::vector<double> tempTraj = old_begin_traj;
+    std::vector<double> tempTime = old_begin_time;
+    for (int j = old_index+1; j < trajectory.size(); j++) {
+        tempTraj.push_back(trajectory[j]);
+        tempTime.push_back(time[j]);
+    }
+    trajectory = tempTraj;
+    time = tempTime;
+    
+    //also reset all the indices of the sample times
+    for (int i = 0; i < sample_time_vec.size(); i++) {
+        sample_time_vec[i]->reset_idx();
+    }
+    
+    update_begin = 0;
 }
 
 int wfSamplePath::get_sampleTime(int i) {

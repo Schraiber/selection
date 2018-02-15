@@ -129,12 +129,15 @@ double sample_time::propose() {
         cur_idx = -1;
     } else if (curVal < oldVal) {
         //if less than, go down
-        for (int i = old_idx; i > 0; i--) {
+        for (int i = old_idx; i >= 0; i--) {
             if (curParamPath->get_path()->get_time(i) < curVal) {
                 double up_time = curParamPath->get_path()->get_time(i+1);
                 double down_time = curParamPath->get_path()->get_time(i);
                 double up_dif = up_time-curVal;
                 double down_dif = curVal-down_time;
+                //std::cout << "curVal = " << curVal << std::endl;
+                //std::cout << "down_time = " << down_time << ", up_time = " << up_time << std::endl;
+                //std::cout << "down_dif = " << down_dif << ", up_dif = " << up_dif << std::endl;
                 if (down_dif < up_dif) {
                     curVal = down_time;
                     cur_idx = i;
@@ -148,7 +151,7 @@ double sample_time::propose() {
     } else {
         //if greater than, go up
         for (int i = old_idx; i < curParamPath->get_path()->get_length(); i++) {
-            if (i == -1) continue;
+            if (i == -1) continue; //hack to deal with needing to start from the allele age
             if (curParamPath->get_path()->get_time(i) > curVal) {
                 double up_time = curParamPath->get_path()->get_time(i);
                 double down_time = curParamPath->get_path()->get_time(i-1);
@@ -175,16 +178,19 @@ double sample_time::propose() {
     
     //NEW: refelcted uniform
     double propRatio = 0;
-    if (1) { //curVal > youngest || curVal < oldest) {
-        std::cout << "Proposed new sample time" << std::endl;
+    if (curVal > youngest || curVal < oldest) {
+        std::cout << "ERROR: sample_time proposal is outside of range" << std::endl;
         std::cout << "oldest = " << oldest << ", youngest = " << youngest << std::endl;
         std::cout << "Allele age = " << curParamPath->get_path()->get_time(0) << std::endl;
         std::cout << "oldVal = " << oldVal << ", curVal = " << curVal << std::endl;
         std::cout << "Starting curVal = " << startVal << std::endl;
         std::cout << "Final curVal = " << curVal << std::endl;
-        std::cout << "old_idx = " << old_idx << std::endl;
+        std::cout << "old_idx = " << old_idx << ", cur_idx = " << cur_idx << std::endl;
+        std::cout << "path->time(old_idx) = " << curParamPath->get_path()->get_time(old_idx) << std::endl;
+        std::cout << "path->time(cur_idx) = " << curParamPath->get_path()->get_time(cur_idx) << std::endl;
         std::cout << "propRatio = " << propRatio << std::endl;
-        std::cin.ignore();
+        //std::cin.ignore();
+        //exit(1);
     }
     return propRatio;
 }
@@ -453,11 +459,16 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 }
 
 void param_path::reset() {
-	curPath->reset();
+	((wfSamplePath*)curPath)->resetIntermediate();
 }
 
 void sample_time::reset() {
     curVal = oldVal;
     cur_idx = old_idx;
     ((wfSamplePath*)curParamPath->get_path())->resetFirstNonzero();
+}
+
+void param_age::reset() {
+    curVal = oldVal;
+    ((wfSamplePath*)curParamPath->get_path())->resetBeginning();
 }

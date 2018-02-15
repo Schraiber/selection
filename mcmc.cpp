@@ -125,6 +125,19 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	
 	//run mcmc
 	for (gen = 0; gen < num_gen; gen++) {
+        
+        
+//        for (int i = 0; i < sample_time_vec.size(); i++) {
+//            double curTime = sample_time_vec[i]->get();
+//            int curIdx = sample_time_vec[i]->get_idx();
+//            double curTimePath = curPath->get_time(curIdx);
+//            std::cout << "Before proposal, sample time index " << i << " is:" << std::endl;
+//            std::cout << "curTime = " << curTime << std::endl;
+//            std::cout << "curIdx = " << curIdx << std::endl;
+//            std::cout << "curTimePath = " << curTimePath << std::endl;
+//        }
+//        std::cout << std::endl;
+
 		
 		std::string state;
 		double propRatio = 0;
@@ -145,6 +158,17 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		curWF = new wfMeasure(random,pars[0]->get());
 		oldlnL = curlnL;
 		curlnL = compute_lnL_sample_only(curPath);
+        
+//        for (int i = 0; i < sample_time_vec.size(); i++) {
+//            double curTime = sample_time_vec[i]->get();
+//            int curIdx = sample_time_vec[i]->get_idx();
+//            double curTimePath = curPath->get_time(curIdx);
+//            std::cout << "After proposal, sample time index " << i << " is:" << std::endl;
+//            std::cout << "curTime = " << curTime << std::endl;
+//            std::cout << "curIdx = " << curIdx << std::endl;
+//            std::cout << "curTimePath = " << curTimePath << std::endl;
+//        }
+//        std::cout << std::endl;
 
 		
 		double LLRatio = curlnL-oldlnL;
@@ -179,12 +203,10 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			state = "Accept";
 		} else {
 			//reject
-			if (curProp < pars.size()-1) {
+			if (curProp < pars.size()) {
 				pars[curProp]->reset();
 			}
-			curPath->reset();
-			curPath->set_update_begin(0);
-			curPath->set_old_index(-1);
+
 			
 			delete curWF;
 			curWF = oldWF;
@@ -196,6 +218,19 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		if (gen % printFreq == 0) {
 			std::cout << state << std::endl;
 		}
+        
+        for (int i = 0; i < sample_time_vec.size(); i++) {
+            double curTime = sample_time_vec[i]->get();
+            int curIdx = sample_time_vec[i]->get_idx();
+            double curTimePath = curPath->get_time(curIdx);
+            if (curTime != curTimePath && curIdx != -1) {
+                std::cout << "ERROR: sample time index for time " << i << " is lost!" << std::endl;
+                std::cout << "curTime = " << curTime << std::endl;
+                std::cout << "curIdx = " << curIdx << std::endl;
+                std::cout << "curTimePath = " << curTimePath << std::endl;
+                exit(1);
+            }
+        }
 		
 		int tuningFreq = num_gen/1000;
 		if (tuningFreq < 100) {

@@ -103,9 +103,11 @@ public:
 	void set_update_begin(bool up = 1) {update_begin = up;}; //use this in the propose thing
 	double get_allele_age() {return allele_age;};
 	
-	//reset specifically for wfSamplePath, because need to deal with age stuff
-	void reset(); 
-	
+	//reset the interior portion of the path
+    void resetIntermediate();
+    //reset the beginning of the path
+    void resetBeginning();
+    
 	//sample probabilities
 	double sampleProb(int i);
 	std::vector<double> sampleProb();
