@@ -98,14 +98,14 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	//initialize the proposal ratios
 	//probably move this somewhere else
 	std::vector<double> propChance(0);
-	propChance.push_back(mySettings.get_a1prop()); //update alpha1 1
-	propChance.push_back(mySettings.get_a2prop()); //update alpha2 1
-	propChance.push_back(mySettings.get_ageprop()); //update start/age 2
-	propChance.push_back(mySettings.get_endprop()); //update end 2
+	propChance.push_back(mySettings.get_a1prop()); //update alpha1
+	propChance.push_back(mySettings.get_a2prop()); //update alpha2
+	propChance.push_back(mySettings.get_ageprop()); //update start/age
+	propChance.push_back(mySettings.get_endprop()); //update end
     for (int i = 0; i < time_idx.size(); i++) {
-        propChance.push_back(mySettings.get_timeprop()); //update times 1
+        propChance.push_back(mySettings.get_timeprop()); //update times
     }
-	propChance.push_back(mySettings.get_pathprop()); //update path 5
+	propChance.push_back(mySettings.get_pathprop()); //update path
 
 	//store as a cdf
 	double sum = 0;
@@ -125,20 +125,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	
 	//run mcmc
 	for (gen = 0; gen < num_gen; gen++) {
-        
-        
-//        for (int i = 0; i < sample_time_vec.size(); i++) {
-//            double curTime = sample_time_vec[i]->get();
-//            int curIdx = sample_time_vec[i]->get_idx();
-//            double curTimePath = curPath->get_time(curIdx);
-//            std::cout << "Before proposal, sample time index " << i << " is:" << std::endl;
-//            std::cout << "curTime = " << curTime << std::endl;
-//            std::cout << "curIdx = " << curIdx << std::endl;
-//            std::cout << "curTimePath = " << curTimePath << std::endl;
-//        }
-//        std::cout << std::endl;
 
-		
 		std::string state;
 		double propRatio = 0;
 		double priorRatio = 0;
@@ -158,18 +145,6 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		curWF = new wfMeasure(random,pars[0]->get());
 		oldlnL = curlnL;
 		curlnL = compute_lnL_sample_only(curPath);
-        
-//        for (int i = 0; i < sample_time_vec.size(); i++) {
-//            double curTime = sample_time_vec[i]->get();
-//            int curIdx = sample_time_vec[i]->get_idx();
-//            double curTimePath = curPath->get_time(curIdx);
-//            std::cout << "After proposal, sample time index " << i << " is:" << std::endl;
-//            std::cout << "curTime = " << curTime << std::endl;
-//            std::cout << "curIdx = " << curIdx << std::endl;
-//            std::cout << "curTimePath = " << curTimePath << std::endl;
-//        }
-//        std::cout << std::endl;
-
 		
 		double LLRatio = curlnL-oldlnL;
         if (curlnL != curlnL || oldlnL != oldlnL) {

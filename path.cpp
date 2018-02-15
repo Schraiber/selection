@@ -361,11 +361,7 @@ void wfSamplePath::set_allele_age(double a, path* p, int i) {
     //go through sample times to update index
     std::vector<double>::iterator search_it;
     int new_idx;
-//    std::cout << "old_age = " << old_age << ", allele_age = " << allele_age << std::endl << std::endl;
     for (int j = 0; j < sample_time_vec.size(); j++) {
-//        std::cout << "Checking sample time " << j << std::endl;
-//        std::cout << "Current time = " << sample_time_vec[j]->get() << std::endl;
-//        std::cout << "Current index = " << sample_time_vec[j]->get_idx() << std::endl;
         if (sample_time_vec[j]->get() < allele_age) {
             //if it's older than the allele age, just set idx to -1
             sample_time_vec[j]->set_idx(-1);
@@ -382,11 +378,8 @@ void wfSamplePath::set_allele_age(double a, path* p, int i) {
             new_idx = sample_time_vec[j]->get_idx() + lengthDif;
             sample_time_vec[j]->set_idx(new_idx);
         }
-//        std::cout << "Updated time = " << sample_time_vec[j]->get() << std::endl;
-//        std::cout << "Updated index = " << sample_time_vec[j]->get_idx() << std::endl;
-    }
-//    std::cout << std::endl;
 
+    }
 }
 
 

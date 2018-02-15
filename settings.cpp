@@ -42,8 +42,8 @@ settings::settings(int argc, char* const argv[]) {
     inputFile = "";
 	mySeed = time(0);
 	output_tsv = 0;
-    a1prop = 1.0;
-    a2prop = 1.0;
+    a1prop = 2.0;
+    a2prop = 2.0;
     ageprop = 10.0;
     endprop = 5.0;
     timeprop = 5.0;

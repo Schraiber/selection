@@ -205,15 +205,11 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
             }
 			int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
-            //REMOVE THIS
-            //std::cerr << (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)) << " ";
 			i++;
 		}
 		//and the last little bit, where I need a left limit
 		int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
-        //REMOVE THIS
-        //std::cerr << (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)) << std::endl;
 		//then the "end" potential
 		Hm_wt += H_wf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, rho, 1);
 	}
@@ -226,15 +222,11 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 		while (p->get_time(i) < dconts[j+1]) {
 			int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
-            //REMOVE THIS
-            //std::cerr << (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)) << " ";
 			i++;
 		}
 		//and the last little bit, where I need a left limit
 		int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
-        //REMOVE THIS
-        //std::cerr << (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)) << std::endl;
 	}
 	
 	//compute the time integral of the time derivative
@@ -245,19 +237,12 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 		while (p->get_time(i) < dconts[j+1]) {
 			int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
-            //REMOVE THIS
-            //std::cerr << (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)) << " ";
 			i++;
 		}
 		//and the last little bit, where I need a left limit
 		int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
-        //REMOVE THIS
-        //std::cerr << (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)) << std::endl;
 	}
-    //REMOVE THIS
-    //std::cout << "Hm_wt Hm_w0 int_mderiv int_msquare int_mtime\n";
-    //std::cout << Hm_wt << " " << Hm_w0 << " " << int_mderiv << " " << int_msquare << " " << int_mtime << std::endl;
 	
 	if (!is_bridge) {
 		return (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
@@ -470,19 +455,11 @@ double cbpMeasure::rW(double kappa, int m) {
 	double u, w, z;
 	
 	bool done = 0;
-//    std::cout << "Generating W" << std::endl;
-//    std::cout << "kappa = " << kappa << ", m = " << m << std::endl;
-//    std::cout << "d = " << d << ", b = " << b << ", x = " << x << ", c = " << c << std::endl;
+
 	while (!done) {
-//        std::cout << "starting loop" << std::endl;
 		z = random->betaRv(d/2.0, d/2.0);
-//        std::cout << "z = " << z << std::endl;
 		w = (1.0-(1.0+b)*z)/(1.0-(1.0-b)*z);
-//        std::cout << "w = " << w << std::endl;
 		u = random->uniformRv();
-//        std::cout << "u = " << u << std::endl;
-//        std::cout << l*w+d*log(1.0-x*w)-c << " " << log(u) << std::endl;
-//        std::cin.ignore();
 		if (l*w+d*log(1.0-x*w)-c >= log(u)) {
 			done = 1;
 		}
@@ -520,10 +497,8 @@ path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::ve
 	path* bes4_bridge = new path(b4_traj,time_vec);
 	//clean up some memory
 	for (i = 0; i < bb_paths.size(); i++) {
-		//delete bm_paths[i];
 		delete bb_paths[i];
 	}
-	//bm_paths.clear();
 	bb_paths.clear();
 	return bes4_bridge;
 }
@@ -569,7 +544,6 @@ path* wfMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vec
 		test_path = cbp->prop_bridge(x0, xt, t0, t,time_vec);
 		gir = cbp->log_girsanov_wf(test_path, 0, 0);
 		accept_prob = rescale + gir;
-//		std::cout << accept_prob << std::endl;
 		if (accept_prob > 0) {
 			std::cerr << "Envelope is not sufficient" << std::endl;
 			exit(1);

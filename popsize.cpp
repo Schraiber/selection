@@ -194,11 +194,5 @@ std::vector<double> popsize::getBreakTimes(double t0, double t) {
 		}
 		to_return.push_back(t);
 	}
-//	std::cout << "t0: " << t0 << " t: " << t << std::endl;
-//	for (int i = 0; i < to_return.size(); i++) {
-//		std::cout << to_return[i] << " ";
-//	}
-//	std::cout << std::endl;
-//	std::cout << std::endl;
 	return to_return;
 }
