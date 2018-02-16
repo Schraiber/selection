@@ -237,7 +237,7 @@ void wfSamplePath::print_traj(std::ostream& o) {
 	o << std::endl;
 }
 
-wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure* wf, settings& s): path() {
+wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure* wf, settings& s, MbRandom* r): path() {
     myPop = p;
     
     sample_time_vec = st;
@@ -248,12 +248,8 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
     std::vector<double> initial_data(num_samples);
     first_nonzero = -INFINITY;
     for (int i = 0; i < num_samples; i++) {
-        initial_data[i] = sample_time_vec[i]->get_sc()/sample_time_vec[i]->get_ss();
-        if (initial_data[i] == 0) {
-            initial_data[i] += exp(-10);
-        } else if (initial_data[i] == 1) {
-            initial_data[i] -= exp(-10);
-        }
+        //draw initial state from beta distribution with prior biased toward low frequency
+        initial_data[i] = r->betaRv(.5 + sample_time_vec[i]->get_sc(), 2 + sample_time_vec[i]->get_ss() - sample_time_vec[i]->get_sc());
         if (first_nonzero == -INFINITY && sample_time_vec[i]->get_sc() != 0) {
             first_nonzero = sample_time_vec[i]->get();
         }
@@ -261,16 +257,19 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
     
     //get the times to include
     std::vector<double> breakPoints;
-    for (int i =0; i < num_samples; i++) {
+    for (int i = 0; i < num_samples; i++) {
         breakPoints.push_back(sample_time_vec[i]->get_youngest());
         breakPoints.push_back(sample_time_vec[i]->get());
+        std::cout << "The " << i << "th sample time is " << sample_time_vec[i]->get() << std::endl;
         breakPoints.push_back(sample_time_vec[i]->get_oldest());
     }
     
-    std::vector<double> curBreaks = myPop->getBreakTimes(first_nonzero, sample_time_vec[num_samples-1]->get_youngest());
+    double max_time = breakPoints[*std::max_element(breakPoints.begin(), breakPoints.end())];
     
-    for (int j = 0; j < curBreaks.size()-1; j++) {
-        breakPoints.push_back(curBreaks[j]);
+    std::vector<double> curBreaks = myPop->getBreakTimes(first_nonzero, max_time);
+    
+    for (int i = 0; i < curBreaks.size(); i++) {
+        breakPoints.push_back(curBreaks[i]);
     }
     
     //sort
@@ -284,21 +283,20 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
     double dt = s.get_dt();
     int min_steps = s.get_grid();
     int cur_end_ind = 0;
-    int curTimeInd = 1;
     int curBreakStart = 0;
     path* nextPath;
     
     
     int cur_time_idx = 0;
-    sample_time_vec[cur_time_idx]->set_idx(cur_end_ind);
-    cur_time_idx++;
     std::vector<double> time_vec;
     time_vec.resize(0);
     time_vec.push_back(breakPoints[0]);
+    double curStart;
+    double curEnd;
     for (int curBreak = 0; curBreak < breakPoints.size()-1; curBreak++) {
         //make sure the time vector includes all the break points
-        double curStart = breakPoints[curBreak];
-        double curEnd = breakPoints[curBreak+1];
+        curStart = breakPoints[curBreak];
+        curEnd = breakPoints[curBreak+1];
         int steps = (curEnd-curStart)/dt+1;
         if (steps < min_steps) {
             steps = min_steps;
@@ -313,7 +311,7 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
         }
         time_vec[time_vec.size()-1] = curEnd;
         //if we hit the time of a data point, simulate path between the two data points
-        if (curEnd == sample_time_vec[curTimeInd]->get()) {
+        if (curEnd == sample_time_vec[cur_time_idx]->get()) {
             nextPath = new path(wf->fisher(initial_data[curBreakStart]), wf->fisher(initial_data[curBreakStart+1]), time_vec[0], time_vec[time_vec.size()-1], wf, time_vec);
             if (curBreakStart == 0) {
                 this->append(nextPath);
@@ -323,7 +321,6 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
             sample_time_vec[cur_time_idx]->set_idx(cur_end_ind-1);
             cur_time_idx++;
             curBreakStart++;
-            curTimeInd++;
             delete nextPath;
             time_vec.resize(0);
             time_vec.push_back(curEnd);
@@ -339,7 +336,6 @@ wfSamplePath::~wfSamplePath() {
 }
 
 void wfSamplePath::set_allele_age(double a, path* p, int i) {
-	int j = 0;
     int oldLength = time.size();
     double endTimeUpdate = p->get_time(p->get_length()-1);
 	old_age = allele_age;
@@ -349,7 +345,7 @@ void wfSamplePath::set_allele_age(double a, path* p, int i) {
 	std::vector<double> tempTraj = p->get_traj();
 	std::vector<double> tempTime = p->get_time();
 	old_index = tempTime.size() - 1; 
-	for (j = i+1; j < trajectory.size(); j++) {
+	for (int j = i+1; j < trajectory.size(); j++) {
 		tempTraj.push_back(trajectory[j]);
 		tempTime.push_back(time[j]);
 	}
@@ -364,19 +360,27 @@ void wfSamplePath::set_allele_age(double a, path* p, int i) {
     for (int j = 0; j < sample_time_vec.size(); j++) {
         if (sample_time_vec[j]->get() < allele_age) {
             //if it's older than the allele age, just set idx to -1
+            std::cout << "setting index " << j << ", with value " << sample_time_vec[j]->get() << ", to -1" << std::endl;
             sample_time_vec[j]->set_idx(-1);
-        } else if (sample_time_vec[j]->get() < endTimeUpdate) {
+        } else if (sample_time_vec[j]->get() <= endTimeUpdate) {
             //if it's part of the new trajectory, find where it is
             search_it = std::lower_bound(time.begin(),time.end(),sample_time_vec[j]->get());
             if (search_it == time.end() && sample_time_vec[j]->get() != time[time.size()-1]) {
                 std::cout << "ERROR: could not find sample time index " << j << " with value " << sample_time_vec[j]->get() << " in time vector!" << std::endl;
             }
             new_idx = search_it-time.begin();
+            std::cout << "Setting index " << j << ", with value " << sample_time_vec[j]->get() << ", which is part of the update, to " << new_idx << std::endl;
+            std::cout << "old path time = " << time[sample_time_vec[j]->get_idx()];
             sample_time_vec[j]->set_idx(new_idx);
+            std::cout << ", new path time = " << time[sample_time_vec[j]->get_idx()] << std::endl;
         } else {
             //otherwise, just update the position by adding!
             new_idx = sample_time_vec[j]->get_idx() + lengthDif;
+            std::cout << "Setting index " <<j << ", with value " << sample_time_vec[j]->get() << ", and old index " << sample_time_vec[j]->get_idx() << ",by adding, to " << new_idx << std::endl;
+            std::cout << "old path time = " << time[sample_time_vec[j]->get_idx()];
             sample_time_vec[j]->set_idx(new_idx);
+            std::cout << ", new path time = " << time[sample_time_vec[j]->get_idx()] << std::endl;
+
         }
 
     }

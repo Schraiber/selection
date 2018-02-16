@@ -213,6 +213,8 @@ popsize* settings::parse_popsize_file() {
     return new popsize(*this);
 }
 
+bool comparePtrToSampleTime(sample_time* a, sample_time* b) { return (*a < *b); }
+
 std::vector<sample_time*> settings::parse_input_file(MbRandom* r) {
     std::cout << "Parsing input" << std::endl;
     std::ifstream inFile(inputFile.c_str());
@@ -239,15 +241,16 @@ std::vector<sample_time*> settings::parse_input_file(MbRandom* r) {
         //Convert time units
         curLowTime /= (gen_time*2*N0);
         curHighTime /= (gen_time*2*N0);
-        //Set the sample time to mean to initialize
-        curTime = (curLowTime+curHighTime)/2.0;
+        //Set the sample time randomly to initialize
+        curTime = r->uniformRv(curLowTime, curHighTime);
         
         sample_time* cur_sample_time = new sample_time(curTime, curLowTime, curHighTime, curSS, curCount, r);
         sample_time_vec.push_back(cur_sample_time);
     }
     
     //Sort so in order by current value
-    std::sort(sample_time_vec.begin(), sample_time_vec.end());
+    std::sort(sample_time_vec.begin(), sample_time_vec.end(),comparePtrToSampleTime);
+    
     
     //check that most recent time point is fixed
     int num_sam = sample_time_vec.size();

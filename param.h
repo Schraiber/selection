@@ -139,6 +139,8 @@ public:
         sample_size = ss;
         sample_count = sc;
         tuning = (youngest-oldest)/2.0;
+        cur_idx = -1;
+        old_idx = -1;
     };
     
     double get_ss() {return sample_size;};

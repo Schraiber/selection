@@ -166,8 +166,9 @@ generate_sample_data = function(n,sample_times,sample_sizes, a,t_1,t_2,gamma,h,t
 			test = sim_wf_diploid_popsize(a=a,t_1=t_1[i],t_2=t_2,gamma=gamma[i],h=h[i],t_len=t_len, popSize = popSize)
 			if (test[2,ncol(test)] < 1 && test[2,ncol(test)] > 0) {			
 				first_in_t = max(which(sample_times<t_1[i]))+1
-				sample_inds = sapply(sample_times[first_in_t:length(sample_times)],function(s){max(which(test[1,]<=s))})
-				cur_counts = c(rep(0,length(sample_times)-length(sample_inds)),rbinom(length(sample_inds),prob=test[2,sample_inds],size=sample_sizes))
+				samples_in_path = first_in_t:length(sample_times)
+				sample_inds = sapply(sample_times[samples_in_path],function(s){max(which(test[1,]<=s))})
+				cur_counts = c(rep(0,length(sample_times)-length(sample_inds)),rbinom(length(sample_inds),prob=test[2,sample_inds],size=sample_sizes[samples_in_path]))
 				if (sum(cur_counts>0) > 1) {
 					seg=TRUE
 				}
@@ -176,7 +177,7 @@ generate_sample_data = function(n,sample_times,sample_sizes, a,t_1,t_2,gamma,h,t
 		paths[[i]] = test
 		sample_counts[i,] = cur_counts
 	}
-	freq = sample_counts/sample_sizes
+	freq = t(t(sample_counts)/sample_sizes)
 	return(list(counts=sample_counts,sizes=sample_sizes,times=sample_times,paths=paths,freq=freq))
 }
 	
@@ -195,8 +196,22 @@ make_command_string_from_sims = function(sim_data, outPrefix, ...) {
 	return(cmd_string)
 }
 
+make_input_matrix_from_sims = function(sim_data) {
+	inFiles = list(length=nrow(sim_data$counts))
+	for (i in 1:nrow(sim_data$counts)) {
+		curInput = matrix(nrow=ncol(sim_data$counts),ncol=4)
+		curInput[,1] = sim_data$counts[i,]
+		curInput[,2] = sim_data$sizes
+		curInput[,3] = sim_data$times
+		curInput[,4] = sim_data$times
+		inFiles[[i]] = curInput
+	}
+	return(inFiles)
+}
+
 ################HMM LIKELIHOOD#####################
 
+#computes the likelihood
 wf_iterate_likelihood_diploid = function(sample_count,sample_size,sample_time,alpha,h,age,N=100) {
 	#convert times into generations
 	sample_time_gen = floor(2*N*sample_time)
@@ -233,9 +248,21 @@ wf_iterate_likelihood_diploid = function(sample_count,sample_size,sample_time,al
 		}
 	}
 	if (any(is.na(like))) {
-		like = -Inf
+		like = 1e-300
 	}
 	return(sum(like))
+}
+
+#Builds the transition matrix
+construct_wf_matrix_diploid = function(s,h,N) {
+	starts = seq(0,2*N,1)
+	ends = seq(0,2*N,1)
+	wf_matrix = sapply(starts,function(i){dbinom(ends,2*N,eta_diploid(i,s,h,N))})
+	return(wf_matrix)
+}
+
+eta_diploid = function(i,s,h,N) {
+	((1+s)*i^2+(1+s*h)*i*(2*N-i))/((1+s)*i^2+2*(1+s*h)*i*(2*N-i)+(2*N-i)^2)
 }
 
 #############TRANSFORMATIONS####################

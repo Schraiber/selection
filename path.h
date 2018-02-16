@@ -22,6 +22,7 @@ class measure;
 class wfMeasure;
 class popsize;
 class sample_time;
+class MbRandom;
 
 class path {
 
@@ -79,7 +80,7 @@ public:
 	//constructor
     wfSamplePath(std::vector<double> p, std::vector<double> t) : path(p,t) {sample_time_vec.resize(0);};
 	wfSamplePath(settings& s, wfMeasure* wf); //initializes a path from sample info, NB: does not propose the beginning!
-    wfSamplePath(std::vector<sample_time*>& times, popsize* myPop, wfMeasure* wf, settings& s); //same as previous, but breaks out the parsing
+    wfSamplePath(std::vector<sample_time*>& times, popsize* myPop, wfMeasure* wf, settings& s, MbRandom* r); //same as previous, but breaks out the parsing
 	
 	//destructor
 	~wfSamplePath();

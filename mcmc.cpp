@@ -49,8 +49,12 @@ void mcmc::no_linked_sites(settings& mySettings) {
     std::vector<sample_time*> sample_time_vec = mySettings.parse_input_file(random);
     
     //initialize path
-    curPath = new wfSamplePath(sample_time_vec, myPop, curWF, mySettings);
-
+    curPath = new wfSamplePath(sample_time_vec, myPop, curWF, mySettings, random);
+    
+    std::cout << "The sample times are" << std::endl;
+    for (int i = 0; i < sample_time_vec.size(); i++) {
+        std::cout << "sample time " << i << " with val " << sample_time_vec[i]->get() << " and idx " << sample_time_vec[i]->get_idx() << std::endl;
+    }
 	
 	//propose an allele age
 	double firstAge;
@@ -91,6 +95,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
         }
     }
 	pars.push_back(curParamPath);
+
     
     //prepare output file
     prepareOutput(mySettings.get_infer_age(), time_idx);
@@ -161,9 +166,12 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		}
 		double mh = LLRatio+propRatio+priorRatio;
 		u = random->uniformRv();
-		
-
-		
+        
+        if (gen % printFreq == 0) {
+            std::cout << gen << " " << curProp;
+            std::cout << std::setprecision(10) <<  " " << oldlnL << " -> " << curlnL << " " << LLRatio << " " << propRatio << " " << priorRatio << " " << mh << " " << log(u) << " ";
+        }
+        
 		if (log(u) < mh) {
 			//accept
 			if (curProp < pars.size()-1) {
@@ -188,8 +196,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
 	
 		
         if (gen % printFreq == 0) {
-            std::cout << gen << " " << curProp;
-            std::cout << std::setprecision(10) <<  " " << oldlnL << " -> " << curlnL << " " << LLRatio << " " << propRatio << " " << priorRatio << " " << mh << " " << log(u) << " " << state << std::endl;
+            std::cout << state << std::endl;
         }
 
         
