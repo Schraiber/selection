@@ -238,8 +238,8 @@ void wfSamplePath::print_traj(std::ostream& o) {
 }
 
 wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure* wf, settings& s, MbRandom* r): path() {
-    
-    std::cout << "Creating initial path (this can take a bit)" << std::endl;
+
+    std::cout << "Creating initial path" << std::endl;
     
     myPop = p;
     
@@ -305,6 +305,10 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
         }
         steps += 1;
         dt = (curEnd-curStart)/(steps-1);
+        if (dt < std::numeric_limits<double>::epsilon()) {
+            dt = std::numeric_limits<double>::epsilon();
+            steps = (curEnd-curStart)/dt+1;
+        }
         cur_end_ind++;
         int end_k = time_vec.size()-1+steps;
         for (int k = time_vec.size(); k < end_k; k++) {
@@ -331,7 +335,7 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
         cur_end_ind--;
     }
     
-    std::cout << "Finished creating initial path!" << std::endl;
+    std::cout << "Finished creating initial path" << std::endl;
 }
 
 
