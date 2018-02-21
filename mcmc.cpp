@@ -50,11 +50,6 @@ void mcmc::no_linked_sites(settings& mySettings) {
     
     //initialize path
     curPath = new wfSamplePath(sample_time_vec, myPop, curWF, mySettings, random);
-    
-    std::cout << "The sample times are" << std::endl;
-    for (int i = 0; i < sample_time_vec.size(); i++) {
-        std::cout << "sample time " << i << " with val " << sample_time_vec[i]->get() << " and idx " << sample_time_vec[i]->get_idx() << std::endl;
-    }
 	
 	//propose an allele age
 	double firstAge;

@@ -337,23 +337,52 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
     std::vector<double>::iterator it = std::unique(timesToInclude.begin(), timesToInclude.end());
     timesToInclude.resize( std::distance(timesToInclude.begin(), it) );
     
+    for (int j = 0; j < timesToInclude.size()-1; j++) {
+        if (!(timesToInclude[j+1]>timesToInclude[j])) {
+            std::cout << "ERROR: Times to include isn't strictly increasing!" << std::endl;
+            for (int l = 0; l < timesToInclude.size(); l++) {
+                std::cout << timesToInclude[l] << " ";
+            }
+            std::cout << std::endl;
+            exit(1);
+        }
+    }
+    
+    
     //create the vector, going between each pair of things
 	std::vector<double> newTimes;
-	int cur_ind = 0;
-	int temp_ind = 0;
+    newTimes.push_back(timesToInclude[0]);
 	for (int j = 0; j < timesToInclude.size()-1; j++) {
 		double dt = min_dt;
 		int steps = (timesToInclude[j+1]-timesToInclude[j])/dt+1;
-		newTimes.push_back(timesToInclude[j]);
-		temp_ind++;
-		for (int i = 1; i < steps - 1; i++) {
-			newTimes.push_back(newTimes[cur_ind + i - 1] + dt);
-			temp_ind++;
-		}
-		cur_ind += temp_ind;
-		temp_ind = 0;
+        if (steps < minUpdate) {
+            steps = minUpdate;
+        }
+        steps += 1;
+        dt = (timesToInclude[j+1]-timesToInclude[j])/(steps-1);
+        if (dt < std::numeric_limits<double>::epsilon()) {
+            dt = std::numeric_limits<double>::epsilon();
+            steps = (timesToInclude[j+1]-timesToInclude[j])/dt+1;
+        }
+        int end_k = newTimes.size()-1+steps;
+        for (int k = newTimes.size(); k < end_k; k++) {
+            newTimes.push_back(newTimes[k-1]+dt);
+        }
+        newTimes[newTimes.size()-1] = timesToInclude[j+1];
 	}
-	newTimes.push_back(timesToInclude[timesToInclude.size()-1]);
+    //check that time vector is strictly increasing
+//    for (int j = 0; j < newTimes.size()-1; j++) {
+//        if (!(newTimes[j+1]>newTimes[j])) {
+//            std::cout << "ERROR: new time vector of length " << newTimes.size() << "  not strictly increasing" << std::endl;
+//            std::cout << "Times to include are" << std::endl;
+//            for (int l = 0; l < timesToInclude.size(); l++) {
+//                std::cout << timesToInclude[l] << " ";
+//            }
+//            std::cout << std::endl;
+//            std::cout << "newTimes[" << j << "+1] = " << newTimes[j+1] << ", newTimes[" << j << "] = " << newTimes[j] << std::endl;
+//            exit(1);
+//        }
+//    }
 	return newTimes;
 }
 
@@ -445,7 +474,7 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 		oldPath->print_traj(std::cerr);
 		oldPath->print_time(std::cerr);
 		std::cerr << myCBP.log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0) << std::endl;
-		std::cerr << "Times New Old" << std::endl;
+		std::cerr << "tNew tOld" << std::endl;
 		std::cerr << tNew << " " << tOld << std::endl;
 		std::cerr << "Time likelihood ratio" << std::endl;
 		std::cerr << -1.0/2.0*xt*xt*(1.0/tNew-1.0/tOld)+2*log(tOld)-2*log(tNew) << std::endl;

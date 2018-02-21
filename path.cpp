@@ -238,6 +238,9 @@ void wfSamplePath::print_traj(std::ostream& o) {
 }
 
 wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure* wf, settings& s, MbRandom* r): path() {
+    
+    std::cout << "Creating initial path (this can take a bit)" << std::endl;
+    
     myPop = p;
     
     sample_time_vec = st;
@@ -260,7 +263,6 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
     for (int i = 0; i < num_samples; i++) {
         breakPoints.push_back(sample_time_vec[i]->get_youngest());
         breakPoints.push_back(sample_time_vec[i]->get());
-        std::cout << "The " << i << "th sample time is " << sample_time_vec[i]->get() << std::endl;
         breakPoints.push_back(sample_time_vec[i]->get_oldest());
     }
     
@@ -328,6 +330,8 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
         } 
         cur_end_ind--;
     }
+    
+    std::cout << "Finished creating initial path!" << std::endl;
 }
 
 
@@ -360,7 +364,6 @@ void wfSamplePath::set_allele_age(double a, path* p, int i) {
     for (int j = 0; j < sample_time_vec.size(); j++) {
         if (sample_time_vec[j]->get() < allele_age) {
             //if it's older than the allele age, just set idx to -1
-            std::cout << "setting index " << j << ", with value " << sample_time_vec[j]->get() << ", to -1" << std::endl;
             sample_time_vec[j]->set_idx(-1);
         } else if (sample_time_vec[j]->get() <= endTimeUpdate) {
             //if it's part of the new trajectory, find where it is
@@ -369,18 +372,11 @@ void wfSamplePath::set_allele_age(double a, path* p, int i) {
                 std::cout << "ERROR: could not find sample time index " << j << " with value " << sample_time_vec[j]->get() << " in time vector!" << std::endl;
             }
             new_idx = search_it-time.begin();
-            std::cout << "Setting index " << j << ", with value " << sample_time_vec[j]->get() << ", which is part of the update, to " << new_idx << std::endl;
-            std::cout << "old path time = " << time[sample_time_vec[j]->get_idx()];
             sample_time_vec[j]->set_idx(new_idx);
-            std::cout << ", new path time = " << time[sample_time_vec[j]->get_idx()] << std::endl;
         } else {
             //otherwise, just update the position by adding!
             new_idx = sample_time_vec[j]->get_idx() + lengthDif;
-            std::cout << "Setting index " <<j << ", with value " << sample_time_vec[j]->get() << ", and old index " << sample_time_vec[j]->get_idx() << ",by adding, to " << new_idx << std::endl;
-            std::cout << "old path time = " << time[sample_time_vec[j]->get_idx()];
             sample_time_vec[j]->set_idx(new_idx);
-            std::cout << ", new path time = " << time[sample_time_vec[j]->get_idx()] << std::endl;
-
         }
 
     }
