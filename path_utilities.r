@@ -155,6 +155,9 @@ rejection_sample_age = function(n,popSize,ancient,recent=0,M=1) {
 generate_sample_data = function(n,sample_times,sample_sizes, a,t_1,t_2,gamma,h,t_len=1000, one_nonzero = F, print_i = F, popSize=function(t){1}) {
 	#generates n sets of sampling data where samples of size sample_sizes were drawn at sample_times
 	#first, simulate the sampling data
+	if (is.unsorted(times)) {
+		stop("Times are unsorted")
+	}
 	paths = list()
 	sample_counts = matrix(nrow=n,ncol=length(sample_times))
 	for (i in 1:n) {
@@ -196,14 +199,53 @@ make_command_string_from_sims = function(sim_data, outPrefix, ...) {
 	return(cmd_string)
 }
 
-make_input_matrix_from_sims = function(sim_data) {
-	inFiles = list(length=nrow(sim_data$counts))
+#bin the data between a and b into num_bin bins
+#last_alone = TRUE means the last one is its own bin
+bin_data = function(sim_data, a, b, num_bin = 4, last_alone = TRUE) {
+	bins = seq(a,b,len=num_bin+1)
+	which.bin = .bincode(sim_data$times,bins)
+	new_times = (bins[1:(length(bins)-1)]+bins[2:length(bins)])/2
+	num_sim = nrow(sim_data$counts)
+	new_counts = matrix(0,nrow=nrow(sim_data$counts),ncol=length(new_times))
+	new_sizes = rep(0,length(new_times))
+	new_freqs = new_counts
+	for (i in 1:length(new_times)) {
+		cur_times = (which.bin==i)
+		
+		new_counts[,i] = rowSums(matrix(sim_data$counts[,cur_times],nrow=num_sim))
+		new_sizes[i] = sum(sim_data$sizes[cur_times])
+	}
+	if (last_alone) {
+		last = length(sim_data$times)
+		new_times = c(new_times,sim_data$times[last])
+		new_sizes = c(new_sizes,sim_data$sizes[last])
+		new_counts = cbind(new_counts,sim_data$counts[,last])
+		new_sizes[which.bin[last]] = new_sizes[which.bin[last]] - sim_data$sizes[last]
+		new_counts[,which.bin[last]] = new_counts[,which.bin[last]] - sim_data$counts[,last]
+	}
+	new_freqs = t(t(new_counts)/new_sizes)
+	new_data = sim_data
+	new_data$counts = new_counts
+	new_data$sizes = new_sizes
+	new_data$freq = new_freqs
+	new_data$times = new_times
+	new_data$lower = bins[1:num_bin]
+	new_data$upper = bins[2:(num_bin+1)]
+	if (last_alone) {
+		new_data$lower = c(new_data$lower,sim_data$times[last])
+		new_data$upper = c(new_data$upper,sim_data$times[last])
+	}
+	return(new_data)
+}
+
+make_input_matrix_from_sims = function(sim_data,lower=sim_data$times,upper=sim_data$times) {
+	inFiles = list()
 	for (i in 1:nrow(sim_data$counts)) {
 		curInput = matrix(nrow=ncol(sim_data$counts),ncol=4)
 		curInput[,1] = sim_data$counts[i,]
 		curInput[,2] = sim_data$sizes
-		curInput[,3] = sim_data$times
-		curInput[,4] = sim_data$times
+		curInput[,3] = lower
+		curInput[,4] = upper
 		inFiles[[i]] = curInput
 	}
 	return(inFiles)

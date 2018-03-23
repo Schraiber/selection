@@ -52,33 +52,48 @@ void mcmc::no_linked_sites(settings& mySettings) {
     curPath = new wfSamplePath(sample_time_vec, myPop, curWF, mySettings, random);
 	
 	//propose an allele age
-	double firstAge;
-	if (mySettings.get_infer_age()) {
-        std::cout << "Setting initial allele age" << std::endl;
-		firstAge = curPath->get_time(0)-0.001;
-		//this essentially assumes that there is no population size change between curPath->get_time(0)-0.001 and curPath->get_time(0)
-		//hopefully this is a reasonable thing to think.
-		path* firstPath = new path(curWF->fisher(mySettings.get_fOrigin()), curPath->get_traj(0), firstAge, curPath->get_time(0), curWF, mySettings);
-        std::cout << "Proposed path from first allele age" << std::endl;
-		curPath->set_allele_age(firstAge, firstPath, 0);
-        std::cout << "Finished setting initial allele age" << std::endl;
-	}
+//	double firstAge;
+//	if (mySettings.get_infer_age()) {
+//        std::cout << "Setting initial allele age" << std::endl;
+//		firstAge = curPath->get_time(0)-0.001;
+//		//this essentially assumes that there is no population size change between curPath->get_time(0)-0.001 and curPath->get_time(0)
+//		//hopefully this is a reasonable thing to think.
+//		path* firstPath = new path(curWF->fisher(mySettings.get_fOrigin()), curPath->get_traj(0), firstAge, curPath->get_time(0), curWF, mySettings);
+//        std::cout << "Proposed path from first allele age" << std::endl;
+//		curPath->set_allele_age(firstAge, firstPath, 0);
+//        std::cout << "Finished setting initial allele age" << std::endl;
+//	}
 	
 	param_gamma* alpha1 = new param_gamma(mySettings.get_a1start(),random);
 	
 	param_gamma* alpha2 = new param_gamma(mySettings.get_a2start(),random);
 	
 	param_path* curParamPath = new param_path(curPath,alpha1,alpha2,random,mySettings);
+    
+    start_freq* start;
+    param_age* age;
+    if (!mySettings.get_infer_age()) {
+        start = new start_freq(curPath->get_traj(0),random,curParamPath);
+    } else {
+        std::cout << "Proposing first allele age" << std::endl;
+        double firstAge = curPath->get_time(0);
+        age = new param_age(firstAge, random, curParamPath, mySettings.get_dt(), mySettings.get_grid());
+        age->propose();
+        std::cout << "First allele age is " << age->get() << std::endl;
+        curPath->set_update_begin(0);
+        curPath->set_old_index(-1);
+    }
+    
 	
 	//initialize the parameter vector
     pars.resize(0);
 	pars.push_back(alpha1);
 	pars.push_back(alpha2);
-	if (!mySettings.get_infer_age()) {
-		pars.push_back(new start_freq(curPath->get_traj(0),random,curParamPath));
-	} else {
-		pars.push_back(new param_age(firstAge, random, curParamPath, mySettings.get_dt(), mySettings.get_grid()));
-	}
+    if (!mySettings.get_infer_age()) {
+        pars.push_back(start);
+    } else {
+        pars.push_back(age);
+    }
 	pars.push_back(new end_freq(curPath->get_traj(curPath->get_length()-1), random, curParamPath));
     std::vector<int> time_idx(0);
     for (int i = 0; i < sample_time_vec.size()-1; i++) {

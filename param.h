@@ -202,7 +202,7 @@ public:
 	};
 	double propose();
 	double prior();
-    
+        
     void reset();
 	
 private:

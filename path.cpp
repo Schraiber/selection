@@ -258,6 +258,8 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
         }
     }
     
+    std::cout << "First nonzero timepoint is " << first_nonzero << std::endl;
+    
     //get the times to include
     std::vector<double> breakPoints;
     for (int i = 0; i < num_samples; i++) {
