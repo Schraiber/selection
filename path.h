@@ -98,6 +98,7 @@ public:
     
     //change sample aspects
     void updateFirstNonzero(double t, double old_t);
+    void updateFirstNonzero();
     void resetFirstNonzero() {first_nonzero=old_first_nonzero;};
 	
 	//for allele age stuff

@@ -290,6 +290,7 @@ void mcmc::prepareOutput(bool infer_age, std::vector<int> time_idx) {
     for (int i = 0; i < time_idx.size(); i++) {
         paramFile << "\tsample_time_" << time_idx[i];
     }
+    paramFile << "\tfirst_nonzero";
     paramFile << std::endl;
 }
 
@@ -300,6 +301,7 @@ void mcmc::printState() {
     for (int i = 0; i < pars.size()-1; i++) {
         paramFile << "\t" << pars[i]->get();
     }
+    paramFile << "\t" << curPath->get_firstNonzero();
     paramFile << std::endl;
     trajFile << gen << " ";
     curPath->print_traj(trajFile << std::setprecision(20));

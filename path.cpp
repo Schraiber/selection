@@ -488,6 +488,17 @@ void wfSamplePath::updateFirstNonzero(double t, double old_t) {
     }
 }
 
+void wfSamplePath::updateFirstNonzero() {
+    old_first_nonzero = first_nonzero;
+    first_nonzero = 0;
+    for (int i = 0; i < sample_time_vec.size(); i++) {
+        if (sample_time_vec[i]->get_sc() > 0 && sample_time_vec[i]->get() < first_nonzero) {
+            first_nonzero = sample_time_vec[i]->get();
+        } else {
+        }
+    }
+}
+
 void path::replace_time(std::vector<double> new_time) {
 	if (new_time.size() != time.size()) {
 		std::cout << "ERROR: Trying to replace a time vector with one of a different size!" << std::endl;

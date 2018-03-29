@@ -168,9 +168,12 @@ double sample_time::propose() {
             }
         }
     }
-    if (cur_idx!=-1 && sample_count > 0) {
-        ((wfSamplePath*)curParamPath->get_path())->updateFirstNonzero(curVal, oldVal);
-    }
+    //try to be clever
+//    if (cur_idx != -1 && sample_count > 0) {
+//        ((wfSamplePath*)curParamPath->get_path())->updateFirstNonzero(curVal, oldVal);
+//    }
+    //just brute force...
+    ((wfSamplePath*)curParamPath->get_path())->updateFirstNonzero();
     
     //OLD: truncated normal
     //double propRatio = random->truncatedNormalPdf(oldest, youngest, curVal, tuning, oldVal);
