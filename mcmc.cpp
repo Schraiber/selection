@@ -243,9 +243,10 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		if (gen % sampleFreq == 0) {
             printState();
 		}
+       // std::cout << "Current length of path is " << curPath->get_length() << " or " << curPath->get_length_time() << std::endl;
+       // std::cout << "Current start and end of path are " << curPath->get_time(0) << " and " << curPath->get_time(curPath->get_length()-1) << std::endl;
+
 	}
-	
-	
 
 }
 

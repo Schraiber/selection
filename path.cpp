@@ -132,12 +132,26 @@ void path::modify(path* p, int i) {
 		int old_length = p->get_length();
 		old_trajectory.resize(0);
 		old_time.resize(0);
+        //old_trajectory.resize(old_length);
+        //old_time.resize(old_length);
 		for (int j = 0; j < old_length; j++) {
 			old_trajectory.push_back(trajectory[i+j]);
+            //old_trajectory[j] = trajectory[i+j];
 			trajectory[i+j] = p->get_traj(j);
 			old_time.push_back(time[i+j]);
+            //old_time[j] = time[i+j];
 			time[i+j] = p->get_time(j);
+            if (time[i+j] < time[i+j-1]) {
+                std::cout << "ERROR: time vector is not sorted!" << std::endl;
+                std::cout << time[i+j] << " >= " << time[i+j-1] << std::endl;
+                exit(1);
+            }
 		}
+        if (trajectory.size() != time.size()) {
+            std::cout << "ERROR: Path trajectory and time are not same lenght!" << std::endl;
+            std::cout << "trajectory.size() = " << trajectory.size() << std::endl;
+            std::cout << "time.size() = " << time.size() << std::endl;
+        }
 	} else {
 		old_trajectory.resize(0);
 		old_time.resize(0);
@@ -152,6 +166,11 @@ void path::reset() {
 			time[old_index+j] = old_time[j];
 		}
 	}
+    if (trajectory.size() != time.size()) {
+        std::cout << "ERROR: Path trajectory and time are not same lenght!" << std::endl;
+        std::cout << "trajectory.size() = " << trajectory.size() << std::endl;
+        std::cout << "time.size() = " << time.size() << std::endl;
+    }
 }
 
 std::vector<double> path::get_time(int i, int j) {
@@ -425,7 +444,7 @@ void wfSamplePath::resetBeginning() {
     }
     trajectory = tempTraj;
     time = tempTime;
-    
+        
     //also reset all the indices of the sample times
     for (int i = 0; i < sample_time_vec.size(); i++) {
         sample_time_vec[i]->reset_idx();
@@ -464,7 +483,6 @@ sample_time* wfSamplePath::get_sampleTimeObj(int i) {
 
 void wfSamplePath::updateFirstNonzero(double t) {
     old_first_nonzero = first_nonzero;
-    first_nonzero = t;
     if (t < old_first_nonzero) {
         first_nonzero = t;
     }

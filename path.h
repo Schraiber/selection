@@ -42,6 +42,7 @@ public:
 	double get_time(int i) {return time[i];};
 	std::vector<double> get_time(int i, int j);
 	double get_length() {return trajectory.size();};
+    double get_length_time() {return time.size();};
 	std::vector<double>::iterator get_traj_iterator(int i) {return trajectory.begin()+i;};
 	std::vector<double>::iterator get_time_iterator(int i) {return time.begin()+i;};
 	path* extract_path(int i, int j);
