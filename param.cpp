@@ -168,8 +168,8 @@ double sample_time::propose() {
             }
         }
     }
-    if (cur_idx!=-1) {
-        ((wfSamplePath*)curParamPath->get_path())->updateFirstNonzero(curVal);
+    if (cur_idx!=-1 && sample_count > 0) {
+        ((wfSamplePath*)curParamPath->get_path())->updateFirstNonzero(curVal, oldVal);
     }
     
     //OLD: truncated normal

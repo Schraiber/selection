@@ -97,7 +97,7 @@ public:
     sample_time* get_sampleTimeObj(int i);
     
     //change sample aspects
-    void updateFirstNonzero(double t);
+    void updateFirstNonzero(double t, double old_t);
     void resetFirstNonzero() {first_nonzero=old_first_nonzero;};
 	
 	//for allele age stuff

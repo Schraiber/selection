@@ -481,9 +481,9 @@ sample_time* wfSamplePath::get_sampleTimeObj(int i) {
     return sample_time_vec[i];
 }
 
-void wfSamplePath::updateFirstNonzero(double t) {
+void wfSamplePath::updateFirstNonzero(double t, double old_t) {
     old_first_nonzero = first_nonzero;
-    if (t < old_first_nonzero) {
+    if (t < old_first_nonzero || old_first_nonzero == old_t) {
         first_nonzero = t;
     }
 }
