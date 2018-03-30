@@ -50,7 +50,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
     
     //initialize path
     curPath = new wfSamplePath(sample_time_vec, myPop, curWF, mySettings, random);
-	
+    
 	//propose an allele age
 //	double firstAge;
 //	if (mySettings.get_infer_age()) {
@@ -77,8 +77,8 @@ void mcmc::no_linked_sites(settings& mySettings) {
     } else {
         std::cout << "Proposing first allele age" << std::endl;
         double firstAge = curPath->get_time(0);
+        std::cout << "firstAge is " << firstAge << std::endl;
         age = new param_age(firstAge, random, curParamPath, mySettings.get_dt(), mySettings.get_grid());
-        age->propose();
         std::cout << "First allele age is " << age->get() << std::endl;
         curPath->set_update_begin(0);
         curPath->set_old_index(-1);
@@ -179,6 +179,9 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		}
 		double mh = LLRatio+propRatio+priorRatio;
 		u = random->uniformRv();
+       
+//        std::cout << "Current length of path is " << curPath->get_length() << " or " << curPath->get_length_time() << std::endl;
+//        std::cout << "Current start and end of path are " << curPath->get_time(0) << " and " << curPath->get_time(curPath->get_length()-1) << std::endl;
         
         if (gen % printFreq == 0) {
             std::cout << gen << " " << curProp;
@@ -243,8 +246,8 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		if (gen % sampleFreq == 0) {
             printState();
 		}
-       // std::cout << "Current length of path is " << curPath->get_length() << " or " << curPath->get_length_time() << std::endl;
-       // std::cout << "Current start and end of path are " << curPath->get_time(0) << " and " << curPath->get_time(curPath->get_length()-1) << std::endl;
+//       std::cout << "Current length of path is " << curPath->get_length() << " or " << curPath->get_length_time() << std::endl;
+//       std::cout << "Current start and end of path are " << curPath->get_time(0) << " and " << curPath->get_time(curPath->get_length()-1) << std::endl;
 
 	}
 
