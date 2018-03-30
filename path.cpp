@@ -301,7 +301,6 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
     std::vector<double>::iterator it = std::unique(breakPoints.begin(), breakPoints.end());
     breakPoints.resize( std::distance(breakPoints.begin(), it) );
     
-    
     //create the time vector
     double dt = s.get_dt();
     int min_steps = s.get_grid();
@@ -311,6 +310,9 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
     
     
     int cur_time_idx = 0;
+    if (breakPoints[0] == sample_time_vec[0]->get()) {
+        cur_time_idx = 1;
+    }
     std::vector<double> time_vec;
     time_vec.resize(0);
     time_vec.push_back(breakPoints[0]);
