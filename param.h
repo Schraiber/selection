@@ -56,7 +56,7 @@ protected:
 
 class param_gamma: public param {
 public:
-    param_gamma(double x, MbRandom* r): param(x, r) {scaling = 100.0; tuning=10.0; minTuning=0.0;};
+    param_gamma(double x, MbRandom* r): param(x, r) {scaling = 10.0; tuning=10.0; minTuning=0.0;};
 	double propose(); 
 	double prior(); 
 	

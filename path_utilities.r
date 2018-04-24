@@ -155,7 +155,7 @@ rejection_sample_age = function(n,popSize,ancient,recent=0,M=1) {
 generate_sample_data = function(n,sample_times,sample_sizes, a,t_1,t_2,gamma,h,t_len=1000, one_nonzero = F, print_i = F, popSize=function(t){1}) {
 	#generates n sets of sampling data where samples of size sample_sizes were drawn at sample_times
 	#first, simulate the sampling data
-	if (is.unsorted(times)) {
+	if (is.unsorted(sample_times)) {
 		stop("Times are unsorted")
 	}
 	paths = list()
@@ -167,8 +167,12 @@ generate_sample_data = function(n,sample_times,sample_sizes, a,t_1,t_2,gamma,h,t
 		seg = FALSE
 		while (seg == FALSE) {
 			test = sim_wf_diploid_popsize(a=a,t_1=t_1[i],t_2=t_2,gamma=gamma[i],h=h[i],t_len=t_len, popSize = popSize)
-			if (test[2,ncol(test)] < 1 && test[2,ncol(test)] > 0) {			
-				first_in_t = max(which(sample_times<t_1[i]))+1
+			if (test[2,ncol(test)] < 1 && test[2,ncol(test)] > 0) {	
+				if (t_1[i]<sample_times[1]) {
+					first_in_t = 1
+				} else {
+					first_in_t = max(which(sample_times<t_1[i]))+1
+				}
 				samples_in_path = first_in_t:length(sample_times)
 				sample_inds = sapply(sample_times[samples_in_path],function(s){max(which(test[1,]<=s))})
 				cur_counts = c(rep(0,length(sample_times)-length(sample_inds)),rbinom(length(sample_inds),prob=test[2,sample_inds],size=sample_sizes[samples_in_path]))
@@ -201,8 +205,12 @@ make_command_string_from_sims = function(sim_data, outPrefix, ...) {
 
 #bin the data between a and b into num_bin bins
 #last_alone = TRUE means the last one is its own bin
-bin_data = function(sim_data, a, b, num_bin = 4, last_alone = TRUE) {
-	bins = seq(a,b,len=num_bin+1)
+bin_data = function(sim_data, a=-.1, b=0, num_bin = 4, bins = NULL, last_alone = TRUE, remove_empty = TRUE) {
+	if (!is.vector(bins)) {
+		bins = seq(a,b,len=num_bin+1)
+	} else {
+		num_bin = length(bins)-1
+	}
 	which.bin = .bincode(sim_data$times,bins)
 	new_times = (bins[1:(length(bins)-1)]+bins[2:length(bins)])/2
 	num_sim = nrow(sim_data$counts)
@@ -211,7 +219,6 @@ bin_data = function(sim_data, a, b, num_bin = 4, last_alone = TRUE) {
 	new_freqs = new_counts
 	for (i in 1:length(new_times)) {
 		cur_times = (which.bin==i)
-		
 		new_counts[,i] = rowSums(matrix(sim_data$counts[,cur_times],nrow=num_sim))
 		new_sizes[i] = sum(sim_data$sizes[cur_times])
 	}
@@ -240,12 +247,14 @@ bin_data = function(sim_data, a, b, num_bin = 4, last_alone = TRUE) {
 
 make_input_matrix_from_sims = function(sim_data,lower=sim_data$times,upper=sim_data$times) {
 	inFiles = list()
+	empty_bins = which(sim_data$sizes==0)
+	num_bins = length(sim_data$sizes[-empty_bins])
 	for (i in 1:nrow(sim_data$counts)) {
-		curInput = matrix(nrow=ncol(sim_data$counts),ncol=4)
-		curInput[,1] = sim_data$counts[i,]
-		curInput[,2] = sim_data$sizes
-		curInput[,3] = lower
-		curInput[,4] = upper
+		curInput = matrix(nrow=num_bins,ncol=4)
+		curInput[,1] = sim_data$counts[i,-empty_bins]
+		curInput[,2] = sim_data$sizes[-empty_bins]
+		curInput[,3] = lower[-empty_bins]
+		curInput[,4] = upper[-empty_bins]
 		inFiles[[i]] = curInput
 	}
 	return(inFiles)
