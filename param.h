@@ -35,7 +35,7 @@ public:
 	double getOld() {return oldVal;};
 	double getTuning() {return tuning;};
 	void setOld(double v) {oldVal = v;};
-	void setNew(double v) {curVal = v;};
+    void setNew(double v) {oldVal = curVal; curVal = v;};
 	
 	
 protected:

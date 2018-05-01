@@ -54,6 +54,8 @@ settings::settings(int argc, char* const argv[]) {
     set_N0 = 0;
     gen_time = 1;
     N0 = 0.5;
+    h = 0.5;
+    fix_h = false;
 
 	//read the parameters
 	int ac = 1;
@@ -144,6 +146,13 @@ settings::settings(int argc, char* const argv[]) {
                 a1start = 0.0;
                 a2start = 0.0;
                 ac += 1;
+                break;
+            case 'h':
+                h = atof(argv[ac+1]);
+                a1prop = 0.0;
+                a1start = a2start*h;
+                fix_h = true;
+                ac += 2;
                 break;
             case 'D':
                 mcmc = 1;

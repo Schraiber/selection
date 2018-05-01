@@ -309,16 +309,17 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
     path* nextPath;
     
     
-    int cur_time_idx = 0;
-    if (breakPoints[0] == sample_time_vec[0]->get()) {
-        cur_time_idx = 1;
+    int cur_time_idx = 1;
+    int startBreak = 0;
+    if (breakPoints[0] != sample_time_vec[0]->get()) {
+        startBreak = 1;
     }
     std::vector<double> time_vec;
     time_vec.resize(0);
-    time_vec.push_back(breakPoints[0]);
+    time_vec.push_back(breakPoints[startBreak]);
     double curStart;
     double curEnd;
-    for (int curBreak = 0; curBreak < breakPoints.size()-1; curBreak++) {
+    for (int curBreak = startBreak; curBreak < breakPoints.size()-1; curBreak++) {
         //make sure the time vector includes all the break points
         curStart = breakPoints[curBreak];
         curEnd = breakPoints[curBreak+1];

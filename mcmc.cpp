@@ -145,6 +145,10 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		pars[curProp]->increaseProp();
 		propRatio = pars[curProp]->propose();
 		priorRatio = pars[curProp]->prior();
+        
+        if (mySettings.get_fix_h() && curProp == 1) {
+            pars[0]->setNew(pars[1]->get()*mySettings.get_h());
+        }
 			
 		oldWF = curWF;
 		curWF = new wfMeasure(random,pars[0]->get());
@@ -189,7 +193,10 @@ void mcmc::no_linked_sites(settings& mySettings) {
 			if (curProp < pars.size()) {
 				pars[curProp]->reset();
 			}
-
+            
+            if (mySettings.get_fix_h() && curProp == 1) {
+                pars[0]->reset();
+            }
 			
 			delete curWF;
 			curWF = oldWF;

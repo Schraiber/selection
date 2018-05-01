@@ -540,7 +540,9 @@ path* wfMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vec
 	double gir;
 	double accept_prob;
 	double u;
+    int num_tries = 0;
 	while (!done) {
+        num_tries++;
 		test_path = cbp->prop_bridge(x0, xt, t0, t,time_vec);
 		gir = cbp->log_girsanov_wf(test_path, 0, 0);
 		accept_prob = rescale + gir;

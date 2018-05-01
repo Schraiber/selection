@@ -176,9 +176,11 @@ generate_sample_data = function(n,sample_times,sample_sizes, a,t_1,t_2,gamma,h,t
 				samples_in_path = first_in_t:length(sample_times)
 				sample_inds = sapply(sample_times[samples_in_path],function(s){max(which(test[1,]<=s))})
 				cur_counts = c(rep(0,length(sample_times)-length(sample_inds)),rbinom(length(sample_inds),prob=test[2,sample_inds],size=sample_sizes[samples_in_path]))
-				if (sum(cur_counts>0) > 1) {
+				if (one_nonzero && sum(cur_counts>0) > 0) {
 					seg=TRUE
-				}
+				} else if (!one_nonzero) {
+					seg=TRUE
+				} 
 			}
 		}
 		paths[[i]] = test

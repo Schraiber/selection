@@ -60,6 +60,8 @@ public:
     int get_gen_time() {return gen_time;};
     double get_N0() {return N0;};
     std::string get_infile() {return inputFile;};
+    double get_h() {return h;};
+    bool get_fix_h() {return fix_h;};
 		
 	//parse things
 	std::vector<double> parse_bridge_pars();
@@ -100,6 +102,8 @@ private:
     int gen_time;
     double N0;
     std::string inputFile;
+    double h;
+    bool fix_h;
 };
 
 
