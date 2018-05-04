@@ -114,6 +114,11 @@ public:
 	//sample probabilities
 	double sampleProb(int i);
 	std::vector<double> sampleProb();
+    
+    //ascertainment
+    double ascertainModern(int min);
+    double ascertainAncient();
+    
 	//print trajectory
 	void print_traj(std::ostream& o = std::cout);
 	

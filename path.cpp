@@ -240,6 +240,31 @@ double wfSamplePath::sampleProb(int i) {
 	return sp;
 }
 
+double wfSamplePath::ascertainModern(int min) {
+    int idx = sample_time_vec[sample_time_vec.size()-1]->get_idx();
+    double ss = sample_time_vec[sample_time_vec.size()-1]->get_ss();
+    double pA = 0;
+    for (int k = min; k < ss; k++) {
+        double curProb = 0;
+        curProb += lgamma(ss+1)-lgamma(k+1)-lgamma(ss-k+1);
+        curProb += k*log((1.0-cos(trajectory[idx]))/2.0);
+        curProb += (ss-k)*log(1-(1.0-cos(trajectory[idx]))/2.0);
+        pA += exp(curProb);
+    }
+    return log(pA);
+}
+
+double wfSamplePath::ascertainAncient() {
+    double pNone = 0;
+    for (int i = 0; i < sample_time_vec.size()-1; i++) {
+        int idx = sample_time_vec[i]->get_idx();
+        double ss = sample_time_vec[i]->get_ss();
+        pNone += ss*log(1-(1.0-cos(trajectory[idx]))/2.0);
+    }
+    double pA = 1 - exp(pNone);
+    return pA;
+}
+
 std::vector<double> wfSamplePath::sampleProb() {
 	std::vector<double> sp(0);
 	for (int i = 0; i < sample_time_vec.size(); i++) {

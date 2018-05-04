@@ -123,6 +123,13 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		propChance[i] = cumsum;
 	}
     
+    //determine if ascertained
+    doAscertain = mySettings.get_ascertain();
+    
+    if (doAscertain) {
+        double ssModern = sample_time_vec[sample_time_vec.size()-1]->get_ss();
+        minCount = ceil(mySettings.get_min_freq()*ssModern);
+    }
     
 	
 	//compute starting lnL
@@ -170,9 +177,6 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		}
 		double mh = LLRatio+propRatio+priorRatio;
 		u = random->uniformRv();
-       
-//        std::cout << "Current length of path is " << curPath->get_length() << " or " << curPath->get_length_time() << std::endl;
-//        std::cout << "Current start and end of path are " << curPath->get_time(0) << " and " << curPath->get_time(curPath->get_length()-1) << std::endl;
         
         if (gen % printFreq == 0) {
             std::cout << gen << " " << curProp;
@@ -240,8 +244,6 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		if (gen % sampleFreq == 0) {
             printState();
 		}
-//       std::cout << "Current length of path is " << curPath->get_length() << " or " << curPath->get_length_time() << std::endl;
-//       std::cout << "Current start and end of path are " << curPath->get_time(0) << " and " << curPath->get_time(curPath->get_length()-1) << std::endl;
 
 	}
 
@@ -272,8 +274,19 @@ double mcmc::compute_lnL_sample_only(wfSamplePath* p) {
 	for (int i = 0; i < p->get_num_samples(); i++) {
 		sample_prob += p->sampleProb(i);
 	}
+    
+    if (doAscertain) {
+        sample_prob -= ascertain(p);
+    }
 	
 	return sample_prob;
+}
+
+double mcmc::ascertain(wfSamplePath* p) {
+    double pA = 0;
+    pA += p->ascertainModern(minCount);
+    pA += p->ascertainAncient();
+    return pA;
 }
 
 void mcmc::prepareOutput(bool infer_age, std::vector<int> time_idx) {

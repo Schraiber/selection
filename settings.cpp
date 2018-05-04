@@ -56,6 +56,8 @@ settings::settings(int argc, char* const argv[]) {
     N0 = 0.5;
     h = 0.5;
     fix_h = false;
+    min_freq = 0;
+    ascertain = false;
 
 	//read the parameters
 	int ac = 1;
@@ -157,6 +159,11 @@ settings::settings(int argc, char* const argv[]) {
             case 'D':
                 mcmc = 1;
                 inputFile = argv[ac+1];
+                ac += 2;
+                break;
+            case 'A':
+                ascertain = true;
+                min_freq = atof(argv[ac+1]);
                 ac += 2;
                 break;
 		}

@@ -62,6 +62,8 @@ public:
     std::string get_infile() {return inputFile;};
     double get_h() {return h;};
     bool get_fix_h() {return fix_h;};
+    bool get_ascertain() {return ascertain;};
+    double get_min_freq() {return min_freq;};
 		
 	//parse things
 	std::vector<double> parse_bridge_pars();
@@ -104,6 +106,8 @@ private:
     std::string inputFile;
     double h;
     bool fix_h;
+    double min_freq;
+    bool ascertain;
 };
 
 
