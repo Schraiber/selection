@@ -129,6 +129,7 @@ void mcmc::no_linked_sites(settings& mySettings) {
     if (doAscertain) {
         double ssModern = sample_time_vec[sample_time_vec.size()-1]->get_ss();
         minCount = ceil(mySettings.get_min_freq()*ssModern);
+        std::cout << "Modeling ascertainment, assuming at least " << minCount << " copies of the derived allele at present and derived allele found in at least one ancient sample" << std::endl;
     }
     
 	
@@ -168,6 +169,10 @@ void mcmc::no_linked_sites(settings& mySettings) {
             std::cout << "Generation = " << gen << std::endl;
             std::cout << "Proposal = " << curProp << std::endl;
             std::cout << "curlnL = " << curlnL << ", oldlnL = " << oldlnL << std::endl;
+            curPath->print();
+            for (int t = 0; t < sample_time_vec.size(); t++) {
+                std::cout << sample_time_vec[t]->get() << std::endl;
+            }
             exit(1);
         }
 		if (curProp == 0 || curProp == 1) {
@@ -274,6 +279,10 @@ double mcmc::compute_lnL_sample_only(wfSamplePath* p) {
 	for (int i = 0; i < p->get_num_samples(); i++) {
 		sample_prob += p->sampleProb(i);
 	}
+    
+    if (sample_prob == -INFINITY) {
+        return -INFINITY;
+    }
     
     if (doAscertain) {
         sample_prob -= ascertain(p);

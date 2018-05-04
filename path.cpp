@@ -259,10 +259,19 @@ double wfSamplePath::ascertainAncient() {
     for (int i = 0; i < sample_time_vec.size()-1; i++) {
         int idx = sample_time_vec[i]->get_idx();
         double ss = sample_time_vec[i]->get_ss();
-        pNone += ss*log(1-(1.0-cos(trajectory[idx]))/2.0);
+        if (idx > 0) {
+            pNone += ss*log(1-(1.0-cos(trajectory[idx]))/2.0);
+        } else {
+            pNone += 0;
+        }
     }
-    double pA = 1 - exp(pNone);
-    return log(pA);
+    double pA;
+    if (pNone < 0) {
+        pA = log(1 - exp(pNone));
+    } else {
+        pA = -INFINITY;
+    }
+    return pA;
 }
 
 std::vector<double> wfSamplePath::sampleProb() {
