@@ -262,7 +262,7 @@ double wfSamplePath::ascertainAncient() {
         pNone += ss*log(1-(1.0-cos(trajectory[idx]))/2.0);
     }
     double pA = 1 - exp(pNone);
-    return pA;
+    return log(pA);
 }
 
 std::vector<double> wfSamplePath::sampleProb() {
