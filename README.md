@@ -43,10 +43,8 @@ The sample input is a 4-column, white-space-separated file. Each line correspond
 
 1. The number of derived alleles
 2. The sample size (in haploid genomes)
-3. The most recent end of the possible age of the sample (i.e. the youngest it could be)
-4. The most ancient end of the possible age of the sample (i.e. the oldest it could be)
-
-**NB:** Note that for now sample ages are not sampled during the MCMC, and the sample age is set to the mean of columns 3 and 4
+3. The most ancient end of the possible age of the sample (i.e. the oldest it could be)
+4. The most recent end of the possible age of the sample (i.e. the youngest it could be)
 
 The population size history is a 3-column, white-space-separated file. Each line is one epoch of population size, which can be constant or exponential growth. For each epoch, each column is
 
