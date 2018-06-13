@@ -249,14 +249,16 @@ bin_data = function(sim_data, a=-.1, b=0, num_bin = 4, bins = NULL, last_alone =
 
 make_input_matrix_from_sims = function(sim_data,lower=sim_data$times,upper=sim_data$times) {
 	inFiles = list()
-	empty_bins = which(sim_data$sizes==0)
-	num_bins = length(sim_data$sizes[-empty_bins])
+	empty_bins = sim_data$sizes==0
+	num_bins = length(sim_data$sizes[!empty_bins])
+	print(sim_data$sizes)
 	for (i in 1:nrow(sim_data$counts)) {
 		curInput = matrix(nrow=num_bins,ncol=4)
-		curInput[,1] = sim_data$counts[i,-empty_bins]
-		curInput[,2] = sim_data$sizes[-empty_bins]
-		curInput[,3] = lower[-empty_bins]
-		curInput[,4] = upper[-empty_bins]
+		curInput[,1] = sim_data$counts[i,!empty_bins]
+		curInput[,2] = sim_data$sizes[!empty_bins]
+		curInput[,3] = lower[!empty_bins]
+		curInput[,4] = upper[!empty_bins]
+		print(curInput)
 		inFiles[[i]] = curInput
 	}
 	return(inFiles)
