@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <limits>
 
 void param::updateTuning() {
 	if (numProp > 0) {
