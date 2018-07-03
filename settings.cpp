@@ -18,6 +18,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 settings::settings(int argc, char* const argv[]) {
 	
