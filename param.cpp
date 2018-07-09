@@ -478,7 +478,7 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 	propRatio += -1.0/2.0*xt*xt*(1.0/tNew-1.0/tOld)+2*log(tOld)-2*log(tNew);
 	
 	if (propRatio != propRatio) {
-		std::cout << "ERROR: proposal ratio is nan! Debugging information sent to stderr:" << std::endl;
+		std::cerr << "ERROR: proposal ratio is nan! Debugging information sent to stderr:" << std::endl;
 		std::cerr << "New path:" << std::endl;
 		newPath->print_traj(std::cerr);
 		newPath->print_time(std::cerr);
