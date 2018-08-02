@@ -71,6 +71,9 @@ void mcmc::no_linked_sites(settings& mySettings) {
         curPath->set_old_index(-1);
     }
     
+    param_F* cur_F = new param_F(0,random);
+    curPath->set_F(cur_F);
+    
 	
 	//initialize the parameter vector
     pars.resize(0);

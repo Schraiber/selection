@@ -222,15 +222,33 @@ std::vector<double> wfSamplePath::sortByIndex(std::vector<double>& vec, std::vec
     return temp_vec;
 }
 
+double wfSamplePath::sampleProb(int k, int n, double y) {
+    double sp = 0;
+    //get the actual frequency
+    double p = (1.0-cos(y))/2.0;
+    if (F->get() == 0) {
+        //binomial
+        sp += lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1);
+        sp += k*log(p);
+        sp += (n-k)*log(1-p);
+    } else {
+        //beta binomial
+        double a = (1-F->get())/F->get()*p;
+        double b =(1-F->get())/F->get()*(1-p);
+        sp += lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1);
+        sp += lgamma(k+a) + lgamma(n-k+b) - lgamma(n+a+b);
+        sp += lgamma(a+b) - lgamma(a) - lgamma(b);
+    }
+    return sp;
+}
+
 double wfSamplePath::sampleProb(int i) {
 	int idx = sample_time_vec[i]->get_idx();
     double sc = sample_time_vec[i]->get_sc();
     double ss = sample_time_vec[i]->get_ss();
 	double sp = 0;
 	if (idx != -1 && idx != 0) {
-		sp += lgamma(ss+1)-lgamma(sc+1)-lgamma(ss-sc+1);
-		sp += sc*log((1.0-cos(trajectory[idx]))/2.0);
-		sp += (ss-sc)*log(1-(1.0-cos(trajectory[idx]))/2.0);
+        sp += sampleProb(sc,ss,trajectory[idx]);
 	} else {
 		if (sc == 0) {
 			sp += 0;
@@ -246,11 +264,7 @@ double wfSamplePath::ascertainModern(int min) {
     double ss = sample_time_vec[sample_time_vec.size()-1]->get_ss();
     double pA = 0;
     for (int k = min; k < ss; k++) {
-        double curProb = 0;
-        curProb += lgamma(ss+1)-lgamma(k+1)-lgamma(ss-k+1);
-        curProb += k*log((1.0-cos(trajectory[idx]))/2.0);
-        curProb += (ss-k)*log(1-(1.0-cos(trajectory[idx]))/2.0);
-        pA += exp(curProb);
+        pA += exp(sampleProb(k, ss, trajectory[idx]));
     }
     return log(pA);
 }
@@ -261,13 +275,15 @@ double wfSamplePath::ascertainAncient() {
         int idx = sample_time_vec[i]->get_idx();
         double ss = sample_time_vec[i]->get_ss();
         if (idx > 0) {
-            pNone += ss*log(1-(1.0-cos(trajectory[idx]))/2.0);
+            //P(current time has 0 derived alleles)
+            pNone += sampleProb(0,ss,trajectory[idx]);
         } else {
             pNone += 0;
         }
     }
     double pA;
     if (pNone < 0) {
+        //1 - P(all are none)
         pA = log(1 - exp(pNone));
     } else {
         pA = -INFINITY;

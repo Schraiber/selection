@@ -74,6 +74,14 @@ private:
 	double scaling;
 };
 
+class param_F: public param {
+public:
+    param_F(double x, MbRandom* r): param(x, r) {tuning = 0.5; minTuning = 0.0;};
+    double propose();
+    double prior();
+    
+};
+
 class param_path: public param {
 public:
 	param_path(path* p, param_gamma* al1, param_gamma* al2, MbRandom* r): param(r) {curPath = p; minUpdate = 10; fracOfPath = 10; min_dt = .001; grid = 10; a1 = al1; a2 = al2;};

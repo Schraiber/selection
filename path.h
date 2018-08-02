@@ -23,6 +23,7 @@ class wfMeasure;
 class popsize;
 class sample_time;
 class MbRandom;
+class param_F;
 
 class path {
 
@@ -112,6 +113,7 @@ public:
     void resetBeginning();
     
 	//sample probabilities
+    double sampleProb(int k, int n, double y);
 	double sampleProb(int i);
 	std::vector<double> sampleProb();
     
@@ -124,6 +126,9 @@ public:
 	
 	//popsize
 	popsize* get_pop() {return myPop;};
+    
+    //set F
+    void set_F(param_F* cur_F) {F = cur_F;};
 	
 private:
 	//relevant to the sample
@@ -152,6 +157,9 @@ private:
 	
 	//the population size history
 	popsize* myPop;
+    
+    //F parameter of Balding-Nichols model
+    param_F* F;
 
 };
 

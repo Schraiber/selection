@@ -83,6 +83,17 @@ double param_h::prior() {
 	return pNew-pOld;
 }
 
+double param_F::prior() {
+    //uniform prior on [0,1]
+    return 0;
+}
+
+double param_F::propose() {
+    oldVal = curVal;
+    curVal = reflectedUniform(oldVal, tuning, 0, 1);
+    return 0;
+}
+
 double start_freq::propose() {
 	oldVal = curVal;
     
@@ -472,8 +483,21 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 	
 	//compute the likelihood ratio of current path under WF measure relative to CBP measure
 	//NB: These ARE bridges but I want to compute the thing myself!
-	propRatio += myCBP.log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0);
-	propRatio -= myCBP.log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0);
+    
+    double new_like = myCBP.log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0);
+    
+    if (new_like != new_like) {
+        std::cerr << "ERROR: new path likelihood is nan! Debugging information sent to stderr:" << std::endl;
+        std::cerr << "New path:" << std::endl;
+        newPath->print_traj(std::cerr);
+        newPath->print_time(std::cerr);
+        std::cerr << new_like << std::endl;
+        exit(1);
+    }
+    
+    double old_like = myCBP.log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0);
+    
+    propRatio += new_like - old_like;
 	
 	propRatio += -1.0/2.0*xt*xt*(1.0/tNew-1.0/tOld)+2*log(tOld)-2*log(tNew);
 	
