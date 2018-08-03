@@ -365,7 +365,7 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 }
 
 
-path* wienerMeasure::prop_path(double x0, double t0, double t, std::vector<double> time_vec) {
+path* wienerMeasure::prop_path(double x0, double t0, double t, std::vector<double>& time_vec) {
 	std::vector<double> traj(time_vec.size(),0);
 	traj[0] = x0;
 	for (int i = 1; i < time_vec.size(); i++) {
@@ -386,11 +386,11 @@ path* wienerMeasure::make_bb_from_bm(path* bm,double u, double v) {
 		double cur_val = (1-(bm->get_time(i)-t0)/(T-t0))*u + (bm->get_time(i)-t0)/(T-t0)*v+bm->get_traj(i)-(bm->get_time(i)-t0)/(T-t0)*bT;
 		p.push_back(cur_val);
 	}
-	path* bb = new path(p, bm->get_time());
+	path* bb = new path(p, bm->get_time_ref());
 	return bb;
 }
 
-path* wienerMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec) {
+path* wienerMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec) {
 	path* bm;
 	path* bb;
 	bm = prop_path(0,t0,t,time_vec);
@@ -467,7 +467,7 @@ double cbpMeasure::rW(double kappa, int m) {
 	return w;
 }
 
-path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec) {
+path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec) {
 	wienerMeasure myWiener(random);
 	int i;
 	std::vector<double> u(4,0);
@@ -504,14 +504,14 @@ path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::ve
 }
 
 //NOTE: parameters are as if in the UNFLIPPED case
-path* flippedCbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec) {
+path* flippedCbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec) {
 	cbpMeasure cbp(random);
 	path* myPath = cbp.prop_bridge(PI-x0, PI-xt, t0, t,time_vec);
 	myPath->flipCbp();
 	return myPath;
 }
 
-path* wfMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec, double rescale) {
+path* wfMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec, double rescale) {
 	double dist_from_0 = x0;
 	if (xt < x0) dist_from_0 = xt;
 	double dist_from_pi = PI-xt;

@@ -57,7 +57,7 @@ path::path(double x0, double xt, double t0, double t, measure* m, settings& s) {
 }
 
 //builds a bridge from x0 to xt with a fixed time vector
-path::path(double x0, double xt, double t0, double t, measure* m, std::vector<double> tvec) {
+path::path(double x0, double xt, double t0, double t, measure* m, std::vector<double>& tvec) {
 	time = tvec;
 	path* temp = m->prop_bridge(x0, xt, t0, t,time);
 	trajectory = temp->get_traj();
@@ -307,7 +307,7 @@ void wfSamplePath::print_traj(std::ostream& o) {
 	o << std::endl;
 }
 
-wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure* wf, settings& s, MbRandom* r): path() {
+wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure* wf, settings& s, MbRandom* r) : path() {
 
     std::cout << "Creating initial path" << std::endl;
     
