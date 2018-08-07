@@ -10,6 +10,7 @@
 #include <vector>
 #include <cmath>
 #include<iomanip>
+#include <signal.h>
 
 #include "measure.h"
 #include "path.h"
@@ -181,19 +182,14 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 	if (dconts.size() > 2) {
 		//std::cout << "Crossing boundaries!" << std::endl;
 	}
-    
-    //brute force check that it's in the right space
-    //TODO: This shouldn't be necessary, since the loop below should take care of this...
-    for (i = 0; i < p->get_length(); i++) {
-        if (p->get_traj(i) < 0 || p->get_traj(i) >= PI) {
-            return -INFINITY;
-        }
-    }
 	
 	//the derivative time integral
 	double int_mderiv = 0;
 	i = 0;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//get the potentials while I'm at it.
 		//first the "beginning" potential 
 		Hm_w0 += H_wf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, rho);
@@ -207,6 +203,7 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
+
 		//and the last little bit, where I need a left limit
 		int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
@@ -218,13 +215,27 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 	double int_msquare = 0;
 	i = 1;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
 			int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
-		//and the last little bit, where I need a left limit
+        //i--;
+        if (i == p->get_length())  {
+            std::cout << "i is wrong" << std::endl;
+            std::cout << "i = " << i << " p->get_length() = " << p->get_length() << std::endl;
+            std::cout << "j = " << j << std::endl;
+            std::cout << "dconts = " << std::endl;
+            for (int k = 0; k < dconts.size(); k++) {
+                std::cout << dconts[k] << " ";
+            }
+            std::cout << std::endl;
+            raise(SIGSEGV);
+        }		//and the last little bit, where I need a left limit
 		int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
@@ -233,19 +244,23 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 	double int_mtime = 0;
 	i = 1;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
 			int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
-		//and the last little bit, where I need a left limit
+        //and the last little bit, where I need a left limit
 		int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
 	
 	if (!is_bridge) {
-		return (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
+        double gir = (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
+        return gir;
 	} else {
 		double gir = (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
 		double cond = log_transition_density(x0, xt, taut-tau0);
@@ -307,6 +322,9 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 	double int_mderiv = 0;
 	i = 0;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//get the potentials while I'm at it.
 		//first the "beginning" potential 
 		Hm_w0 += H_wfwf_r(p->get_traj(i), p->get_time(i), alpha1, alpha1p, alpha2, alpha2p, rho);
@@ -321,7 +339,7 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
-		//and the last little bit, where I need a left limit
+        //and the last little bit, where I need a left limit
 		int_mderiv += (dadx_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho,1)+dadx_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 		//then the "end" potential
@@ -332,13 +350,16 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 	double int_msquare = 0;
 	i = 1;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
 			int_msquare += (a2_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho)+a2_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
-		//and the last little bit, where I need a left limit
+        //and the last little bit, where I need a left limit
         int_msquare += (a2_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho,1)+a2_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
@@ -347,13 +368,16 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 	double int_mtime = 0;
 	i = 1;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
 			int_mtime += (dHdt_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho)+dHdt_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
-		//and the last little bit, where I need a left limit
+        //and the last little bit, where I need a left limit
 		int_mtime += (dHdt_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho,1)+dHdt_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}

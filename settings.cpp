@@ -23,7 +23,7 @@
 settings::settings(int argc, char* const argv[]) {
 	
 	//define defaults
-	max_dt = 0.0001;
+	max_dt = 0.001;
 	min_grid = 10;
 	bridge = 0;
 	mcmc = 0;
@@ -45,7 +45,7 @@ settings::settings(int argc, char* const argv[]) {
 	output_tsv = 0;
     a1prop = 2.0;
     a2prop = 2.0;
-    ageprop = 10.0;
+    ageprop = 20.0;
     endprop = 5.0;
     timeprop = 0.1;
     pathprop = 10.0;

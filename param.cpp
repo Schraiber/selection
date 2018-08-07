@@ -475,7 +475,7 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 	oldPath = curPath->extract_path(0,end_index+1);
 	double tOld = rho->getTau(oldPath->get_time(oldPath->get_length()-1))-rho->getTau(oldPath->get_time(1));
 	double tNew = newPath->get_time(newPath->get_length()-1)-newPath->get_time(1);
-	
+    
 	newPath->replace_time(time_vec);
 	((wfSamplePath*)curPath)->set_allele_age(t0, newPath, end_index);
 	
@@ -489,6 +489,7 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
     if (new_like != new_like) {
         std::cerr << "ERROR: new path likelihood is nan! Debugging information sent to stderr:" << std::endl;
         std::cerr << "New path:" << std::endl;
+        std::cerr << "alpha1 = " << a1->get() << " alpha2 = " << a2->get() << std::endl;
         newPath->print_traj(std::cerr);
         newPath->print_time(std::cerr);
         std::cerr << new_like << std::endl;
@@ -496,6 +497,16 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
     }
     
     double old_like = myCBP.log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0);
+    
+    if (old_like != old_like) {
+        std::cerr << "ERROR: old path likelihood is nan! Debugging information sent to stderr:" << std::endl;
+        std::cerr << "alpha1 = " << a1->get() << " alpha2 = " << a2->get() << std::endl;
+        std::cerr << "Old path:" << std::endl;
+        oldPath->print_traj(std::cerr);
+        oldPath->print_time(std::cerr);
+        std::cerr << old_like << std::endl;
+        exit(1);
+    }
     
     propRatio += new_like - old_like;
 	
@@ -517,9 +528,12 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 		std::cerr << -1.0/2.0*xt*xt*(1.0/tNew-1.0/tOld)+2*log(tOld)-2*log(tNew) << std::endl;
 		exit(1);
 	}
+    
+   
 	
 	delete newPath;
 	delete oldPath;
+    
 	
 	return propRatio;
 }
