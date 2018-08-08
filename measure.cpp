@@ -513,7 +513,6 @@ path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::ve
                 std::cout << "The " << i << "th Brownian bridge between " << u[i] << " and " << xt*v[i] << " is faulty:" << std::endl;
 				bb_paths[i]->print_traj(std::cout);
 				bb_paths[i]->print_time(std::cout << std::setprecision(20));
-				exit(1);
 			}
 		}
 		b4_traj[j] = sqrt(b4_traj[j]);

@@ -361,16 +361,16 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
     std::vector<double>::iterator it = std::unique(timesToInclude.begin(), timesToInclude.end());
     timesToInclude.resize( std::distance(timesToInclude.begin(), it) );
     
-    for (int j = 0; j < timesToInclude.size()-1; j++) {
-        if (!(timesToInclude[j+1]>timesToInclude[j])) {
-            std::cout << "ERROR: Times to include isn't strictly increasing!" << std::endl;
-            for (int l = 0; l < timesToInclude.size(); l++) {
-                std::cout << timesToInclude[l] << " ";
-            }
-            std::cout << std::endl;
-            exit(1);
-        }
-    }
+//    for (int j = 0; j < timesToInclude.size()-1; j++) {
+//        if (!(timesToInclude[j+1]>(timesToInclude[j]+std::numeric_limits<double>::epsilon()))) {
+//            std::cout << "ERROR: Times to include isn't strictly increasing!" << std::endl;
+//            for (int l = 0; l < timesToInclude.size(); l++) {
+//                std::cout << timesToInclude[l] << " ";
+//            }
+//            std::cout << std::endl;
+//            exit(1);
+//        }
+//    }
     
     
     //create the vector, going between each pair of things
@@ -384,8 +384,8 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
         }
         steps += 1;
         dt = (timesToInclude[j+1]-timesToInclude[j])/(steps-1);
-        if (dt < std::numeric_limits<double>::epsilon()) {
-            dt = std::numeric_limits<double>::epsilon();
+        if (dt < 2*std::numeric_limits<double>::epsilon()) {
+            dt = 2*std::numeric_limits<double>::epsilon();
             steps = (timesToInclude[j+1]-timesToInclude[j])/dt+1;
         }
         int end_k = newTimes.size()-1+steps;
@@ -393,20 +393,34 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
             newTimes.push_back(newTimes[k-1]+dt);
         }
         newTimes[newTimes.size()-1] = timesToInclude[j+1];
+        if (!(newTimes[newTimes.size()-1] > newTimes[newTimes.size()-2])) {
+            newTimes.resize(newTimes.size()-1);
+        }
 	}
+    
     //check that time vector is strictly increasing
 //    for (int j = 0; j < newTimes.size()-1; j++) {
 //        if (!(newTimes[j+1]>newTimes[j])) {
 //            std::cout << "ERROR: new time vector of length " << newTimes.size() << "  not strictly increasing" << std::endl;
+//            std::cout << "Machine eps is " << std::numeric_limits<double>::epsilon() << std::endl;
 //            std::cout << "Times to include are" << std::endl;
 //            for (int l = 0; l < timesToInclude.size(); l++) {
 //                std::cout << timesToInclude[l] << " ";
+//            }
+//            std::cout << std::endl;
+//            for (int l = 0; l < timesToInclude.size() - 1; l++) {
+//                std::cout << timesToInclude[l+1] << " - " << timesToInclude[l] << " = " << timesToInclude[l+1] - timesToInclude[l] << " ";
+//            }
+//            std::cout << std::endl;
+//            for (int l = 0; l < timesToInclude.size() - 1; l++) {
+//                std::cout << (timesToInclude[l+1]>timesToInclude[l]) << " ";
 //            }
 //            std::cout << std::endl;
 //            std::cout << "newTimes[" << j << "+1] = " << newTimes[j+1] << ", newTimes[" << j << "] = " << newTimes[j] << std::endl;
 //            exit(1);
 //        }
 //    }
+
 	return newTimes;
 }
 

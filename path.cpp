@@ -380,8 +380,8 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
         }
         steps += 1;
         dt = (curEnd-curStart)/(steps-1);
-        if (dt < std::numeric_limits<double>::epsilon()) {
-            dt = std::numeric_limits<double>::epsilon();
+        if (dt < 2*std::numeric_limits<double>::epsilon()) {
+            dt = 2*std::numeric_limits<double>::epsilon();
             steps = (curEnd-curStart)/dt+1;
         }
         cur_end_ind++;
