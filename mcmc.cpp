@@ -269,18 +269,11 @@ void mcmc::no_linked_sites(settings& mySettings) {
 		if (gen % sampleFreq == 0) {
             printState();
 		}
-        
-        //check that time is fine
-        for (int i = 0; i < curPath->get_length()-1; i++) {
-            if (curPath->get_time(i+1)-curPath->get_time(i) == 0) {
-                std::cout << "ERROR: Path has a zero length entry!" << std::endl;
-                std::cout << "gen = " << gen << std::endl;
-                std::cout << "curProp = " << curProp << std::endl;
-                std::cout << "state = " << state << std::endl;
-            }
-        }
 
 	}
+    paramFile.close();
+    trajFile.close();
+    timeFile.close();
    
 
 }

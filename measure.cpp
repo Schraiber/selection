@@ -187,7 +187,7 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 	double int_mderiv = 0;
 	i = 0;
 	for (j = 0; j < dconts.size()-1; j++) {
-        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+        if (i >= p->get_length()) { //THIS IS A FUCKING HACK
             break;
         }
 		//get the potentials while I'm at it.
@@ -208,7 +208,12 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 		int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 		//then the "end" potential
-		Hm_wt += H_wf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, rho, 1);
+        double tmp = H_wf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, rho, 1);
+        if (tmp != tmp) {
+            std::cout << "computation of H_wf_r is nan" << std::endl;
+            std::cout << "p->get_length() = " << p->get_length() << " i = " << i << " j = " << j << std::endl;
+        }
+        Hm_wt += tmp;
 	}
 
 	//compute the time integral of the square
@@ -260,6 +265,10 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 	
 	if (!is_bridge) {
         double gir = (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
+        if (gir != gir) {
+            std::cout << "ERROR: log_girsanov_wf_r is nan" << std::endl;
+            std::cout << "Hm_wt = " << Hm_wt << " Hm_w0 = " << Hm_w0 << " int_mderiv = " << int_mderiv << " int_msquare = " << int_msquare << " int_mtime = " << int_mtime << std::endl;
+        }
         return gir;
 	} else {
 		double gir = (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
@@ -322,7 +331,7 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 	double int_mderiv = 0;
 	i = 0;
 	for (j = 0; j < dconts.size()-1; j++) {
-        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+        if (i >= p->get_length()) { //THIS IS A FUCKING HACK
             break;
         }
 		//get the potentials while I'm at it.
@@ -382,9 +391,14 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 		* (p->get_time(i)-p->get_time(i-1));
 	}
 	
+    double gir = Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime;
+    
+    if (gir != gir) {
+        std::cout << "ERROR: log_girsanov_wfwf_r is nan" << std::endl;
+        std::cout << "Hm_wt = " << Hm_wt << " Hm_w0 = " << Hm_w0 << " int_mderiv = " << int_mderiv << " int_msquare = " << int_msquare << " int_mtime = " << int_mtime << std::endl;
+    }
 	
-	
-	return (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
+	return gir;
 
 }
 

@@ -62,7 +62,8 @@ plot.posterior.paths = function(paths,sam_freqs,sam_times,ylim=c(0,1),truePath=c
 		fake_traj = rep(0,1000)
 		cur_traj = c(fake_traj,paths$traj[[i]])
 		cur_time = c(fake_time,paths$time[[i]])
-		cur_spline = splinefun(cur_time,cur_traj)
+		#cur_spline = splinefun(cur_time,cur_traj)
+		cur_spline = approxfun(cur_time,cur_traj)
 		post_paths[i,] = cur_spline(post_times)
 	}	
 	path_quantiles = t(apply(post_paths,2,quantile,probs=c(.05,.25,.5,.75,.95)))
