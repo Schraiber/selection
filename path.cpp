@@ -286,11 +286,12 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
         breakPoints.push_back(sample_time_vec[i]->get());
         breakPoints.push_back(sample_time_vec[i]->get_oldest());
     }
-    
-    double max_time = breakPoints[*std::max_element(breakPoints.begin(), breakPoints.end())];
-    
-    std::vector<double> curBreaks = myPop->getBreakTimes(first_nonzero, max_time);
-    
+
+    double min_time = *std::min_element(breakPoints.begin(), breakPoints.end());
+    double max_time = *std::max_element(breakPoints.begin(), breakPoints.end());
+
+    std::vector<double> curBreaks = myPop->getBreakTimes(std::min(min_time, first_nonzero), max_time);
+
     for (int i = 0; i < curBreaks.size(); i++) {
         breakPoints.push_back(curBreaks[i]);
     }
