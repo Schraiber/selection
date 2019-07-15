@@ -284,7 +284,7 @@ double param_path::proposeAlleleAge(double newAge, double oldAge) {
 	int end_index;
 	((wfSamplePath*)curPath)->set_update_begin();
     if (newAge < oldAge) {
-        end_index = 2*minUpdate;
+        end_index = std::min(2*minUpdate, int(curPath->get_length()) - 1);
     } else {
         end_index = 0;
         while (curPath->get_time(end_index) < newAge) {
