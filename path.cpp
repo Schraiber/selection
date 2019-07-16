@@ -21,6 +21,7 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <limits>
 
 struct compare_index
 {
@@ -56,7 +57,7 @@ path::path(double x0, double xt, double t0, double t, measure* m, settings& s) {
 }
 
 //builds a bridge from x0 to xt with a fixed time vector
-path::path(double x0, double xt, double t0, double t, measure* m, std::vector<double> tvec) {
+path::path(double x0, double xt, double t0, double t, measure* m, std::vector<double>& tvec) {
 	time = tvec;
 	path* temp = m->prop_bridge(x0, xt, t0, t,time);
 	trajectory = temp->get_traj();
@@ -221,15 +222,33 @@ std::vector<double> wfSamplePath::sortByIndex(std::vector<double>& vec, std::vec
     return temp_vec;
 }
 
+double wfSamplePath::sampleProb(int k, int n, double y) {
+    double sp = 0;
+    //get the actual frequency
+    double p = (1.0-cos(y))/2.0;
+    if (F->get() == 0) {
+        //binomial
+        sp += lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1);
+        sp += k*log(p);
+        sp += (n-k)*log(1-p);
+    } else {
+        //beta binomial
+        double a = (1-F->get())/F->get()*p;
+        double b =(1-F->get())/F->get()*(1-p);
+        sp += lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1);
+        sp += lgamma(k+a) + lgamma(n-k+b) - lgamma(n+a+b);
+        sp += lgamma(a+b) - lgamma(a) - lgamma(b);
+    }
+    return sp;
+}
+
 double wfSamplePath::sampleProb(int i) {
 	int idx = sample_time_vec[i]->get_idx();
     double sc = sample_time_vec[i]->get_sc();
     double ss = sample_time_vec[i]->get_ss();
 	double sp = 0;
 	if (idx != -1 && idx != 0) {
-		sp += lgamma(ss+1)-lgamma(sc+1)-lgamma(ss-sc+1);
-		sp += sc*log((1.0-cos(trajectory[idx]))/2.0);
-		sp += (ss-sc)*log(1-(1.0-cos(trajectory[idx]))/2.0);
+        sp += sampleProb(sc,ss,trajectory[idx]);
 	} else {
 		if (sc == 0) {
 			sp += 0;
@@ -238,6 +257,38 @@ double wfSamplePath::sampleProb(int i) {
 		}
 	}
 	return sp;
+}
+
+double wfSamplePath::ascertainModern(int min) {
+    int idx = sample_time_vec[sample_time_vec.size()-1]->get_idx();
+    double ss = sample_time_vec[sample_time_vec.size()-1]->get_ss();
+    double pA = 0;
+    for (int k = min; k < ss; k++) {
+        pA += exp(sampleProb(k, ss, trajectory[idx]));
+    }
+    return log(pA);
+}
+
+double wfSamplePath::ascertainAncient() {
+    double pNone = 0;
+    for (int i = 0; i < sample_time_vec.size()-1; i++) {
+        int idx = sample_time_vec[i]->get_idx();
+        double ss = sample_time_vec[i]->get_ss();
+        if (idx > 0) {
+            //P(current time has 0 derived alleles)
+            pNone += sampleProb(0,ss,trajectory[idx]);
+        } else {
+            pNone += 0;
+        }
+    }
+    double pA;
+    if (pNone < 0) {
+        //1 - P(all are none)
+        pA = log(1 - exp(pNone));
+    } else {
+        pA = -INFINITY;
+    }
+    return pA;
 }
 
 std::vector<double> wfSamplePath::sampleProb() {
@@ -256,7 +307,7 @@ void wfSamplePath::print_traj(std::ostream& o) {
 	o << std::endl;
 }
 
-wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure* wf, settings& s, MbRandom* r): path() {
+wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure* wf, settings& s, MbRandom* r) : path() {
 
     std::cout << "Creating initial path" << std::endl;
     
@@ -330,8 +381,8 @@ wfSamplePath::wfSamplePath(std::vector<sample_time*>& st, popsize* p, wfMeasure*
         }
         steps += 1;
         dt = (curEnd-curStart)/(steps-1);
-        if (dt < std::numeric_limits<double>::epsilon()) {
-            dt = std::numeric_limits<double>::epsilon();
+        if (dt < 2*std::numeric_limits<double>::epsilon()) {
+            dt = 2*std::numeric_limits<double>::epsilon();
             steps = (curEnd-curStart)/dt+1;
         }
         cur_end_ind++;

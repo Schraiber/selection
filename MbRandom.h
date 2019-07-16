@@ -622,10 +622,10 @@ inline double MbRandom::poissonQuantile(double lambda, double p) {
 	   CDF(X-1) <= CDF <= CDF(X). */
 	double sum = 0.0;
 	int xmax = 100;
+    double newVal = 0;
 	for (int i=0; i<=xmax; i++)
 		{
 		double sumOld = sum;
-		double newVal;
 		if ( i == 0 )
 			{
 			newVal = exp(-lambda);

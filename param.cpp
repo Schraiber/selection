@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <limits>
 
 void param::updateTuning() {
 	if (numProp > 0) {
@@ -80,6 +81,17 @@ double param_h::prior() {
 	double pOld = -log(PI)+log(scaling)-log((oldVal-0.5)*(oldVal-0.5)+scaling*scaling);
 	double pNew = -log(PI)+log(scaling)-log((curVal-0.5)*(curVal-0.5)+scaling*scaling);
 	return pNew-pOld;
+}
+
+double param_F::prior() {
+    //uniform prior on [0,1]
+    return 0;
+}
+
+double param_F::propose() {
+    oldVal = curVal;
+    curVal = reflectedUniform(oldVal, tuning, 0, 1);
+    return 0;
 }
 
 double start_freq::propose() {
@@ -349,16 +361,16 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
     std::vector<double>::iterator it = std::unique(timesToInclude.begin(), timesToInclude.end());
     timesToInclude.resize( std::distance(timesToInclude.begin(), it) );
     
-    for (int j = 0; j < timesToInclude.size()-1; j++) {
-        if (!(timesToInclude[j+1]>timesToInclude[j])) {
-            std::cout << "ERROR: Times to include isn't strictly increasing!" << std::endl;
-            for (int l = 0; l < timesToInclude.size(); l++) {
-                std::cout << timesToInclude[l] << " ";
-            }
-            std::cout << std::endl;
-            exit(1);
-        }
-    }
+//    for (int j = 0; j < timesToInclude.size()-1; j++) {
+//        if (!(timesToInclude[j+1]>(timesToInclude[j]+std::numeric_limits<double>::epsilon()))) {
+//            std::cout << "ERROR: Times to include isn't strictly increasing!" << std::endl;
+//            for (int l = 0; l < timesToInclude.size(); l++) {
+//                std::cout << timesToInclude[l] << " ";
+//            }
+//            std::cout << std::endl;
+//            exit(1);
+//        }
+//    }
     
     
     //create the vector, going between each pair of things
@@ -372,8 +384,8 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
         }
         steps += 1;
         dt = (timesToInclude[j+1]-timesToInclude[j])/(steps-1);
-        if (dt < std::numeric_limits<double>::epsilon()) {
-            dt = std::numeric_limits<double>::epsilon();
+        if (dt < 2*std::numeric_limits<double>::epsilon()) {
+            dt = 2*std::numeric_limits<double>::epsilon();
             steps = (timesToInclude[j+1]-timesToInclude[j])/dt+1;
         }
         int end_k = newTimes.size()-1+steps;
@@ -381,20 +393,34 @@ std::vector<double> param_path::make_time_vector(double newAge, int end_index, p
             newTimes.push_back(newTimes[k-1]+dt);
         }
         newTimes[newTimes.size()-1] = timesToInclude[j+1];
+        if (!(newTimes[newTimes.size()-1] > newTimes[newTimes.size()-2])) {
+            newTimes.resize(newTimes.size()-1);
+        }
 	}
+    
     //check that time vector is strictly increasing
 //    for (int j = 0; j < newTimes.size()-1; j++) {
 //        if (!(newTimes[j+1]>newTimes[j])) {
 //            std::cout << "ERROR: new time vector of length " << newTimes.size() << "  not strictly increasing" << std::endl;
+//            std::cout << "Machine eps is " << std::numeric_limits<double>::epsilon() << std::endl;
 //            std::cout << "Times to include are" << std::endl;
 //            for (int l = 0; l < timesToInclude.size(); l++) {
 //                std::cout << timesToInclude[l] << " ";
+//            }
+//            std::cout << std::endl;
+//            for (int l = 0; l < timesToInclude.size() - 1; l++) {
+//                std::cout << timesToInclude[l+1] << " - " << timesToInclude[l] << " = " << timesToInclude[l+1] - timesToInclude[l] << " ";
+//            }
+//            std::cout << std::endl;
+//            for (int l = 0; l < timesToInclude.size() - 1; l++) {
+//                std::cout << (timesToInclude[l+1]>timesToInclude[l]) << " ";
 //            }
 //            std::cout << std::endl;
 //            std::cout << "newTimes[" << j << "+1] = " << newTimes[j+1] << ", newTimes[" << j << "] = " << newTimes[j] << std::endl;
 //            exit(1);
 //        }
 //    }
+
 	return newTimes;
 }
 
@@ -463,7 +489,7 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 	oldPath = curPath->extract_path(0,end_index+1);
 	double tOld = rho->getTau(oldPath->get_time(oldPath->get_length()-1))-rho->getTau(oldPath->get_time(1));
 	double tNew = newPath->get_time(newPath->get_length()-1)-newPath->get_time(1);
-	
+    
 	newPath->replace_time(time_vec);
 	((wfSamplePath*)curPath)->set_allele_age(t0, newPath, end_index);
 	
@@ -471,13 +497,37 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 	
 	//compute the likelihood ratio of current path under WF measure relative to CBP measure
 	//NB: These ARE bridges but I want to compute the thing myself!
-	propRatio += myCBP.log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0);
-	propRatio -= myCBP.log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0);
+    
+    double new_like = myCBP.log_girsanov_wf_r(newPath, a1->get(), a2->get(), rho,0);
+    
+    if (new_like != new_like) {
+        std::cerr << "ERROR: new path likelihood is nan! Debugging information sent to stderr:" << std::endl;
+        std::cerr << "New path:" << std::endl;
+        std::cerr << "alpha1 = " << a1->get() << " alpha2 = " << a2->get() << std::endl;
+        newPath->print_traj(std::cerr);
+        newPath->print_time(std::cerr);
+        std::cerr << new_like << std::endl;
+        exit(1);
+    }
+    
+    double old_like = myCBP.log_girsanov_wf_r(oldPath, a1->get(), a2->get(), rho,0);
+    
+    if (old_like != old_like) {
+        std::cerr << "ERROR: old path likelihood is nan! Debugging information sent to stderr:" << std::endl;
+        std::cerr << "alpha1 = " << a1->get() << " alpha2 = " << a2->get() << std::endl;
+        std::cerr << "Old path:" << std::endl;
+        oldPath->print_traj(std::cerr);
+        oldPath->print_time(std::cerr);
+        std::cerr << old_like << std::endl;
+        exit(1);
+    }
+    
+    propRatio += new_like - old_like;
 	
 	propRatio += -1.0/2.0*xt*xt*(1.0/tNew-1.0/tOld)+2*log(tOld)-2*log(tNew);
 	
 	if (propRatio != propRatio) {
-		std::cout << "ERROR: proposal ratio is nan! Debugging information sent to stderr:" << std::endl;
+		std::cerr << "ERROR: proposal ratio is nan! Debugging information sent to stderr:" << std::endl;
 		std::cerr << "New path:" << std::endl;
 		newPath->print_traj(std::cerr);
 		newPath->print_time(std::cerr);
@@ -492,9 +542,12 @@ double param_path::proposeAgePath(double x0,double xt,double t0,double t, std::v
 		std::cerr << -1.0/2.0*xt*xt*(1.0/tNew-1.0/tOld)+2*log(tOld)-2*log(tNew) << std::endl;
 		exit(1);
 	}
+    
+   
 	
 	delete newPath;
 	delete oldPath;
+    
 	
 	return propRatio;
 }

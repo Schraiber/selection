@@ -34,7 +34,7 @@ public:
 	
 	//path stuff
 	//virtual path* prop_path(); //propose a path from the measure
-	virtual path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec) = 0; //propose a bridge
+	virtual path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec) = 0; //propose a bridge
 	//virtual void modify_path(path* p); //modify a path
 	virtual double log_girsanov(path* p, measure* m, double lower, double upper, bool is_bridge = 0); //compute log likelihood ratio of path
 	virtual double log_transition_density(double x, double y, double t) {return NAN;}; 
@@ -44,7 +44,7 @@ public:
 	virtual double log_girsanov_wf_r(path* p, double alpha, double h, popsize* rho, bool is_bridge = 0) {return NAN;};
 	
 protected:
-	path* sim_bm(double x0, double t0, double t, std::vector<double> time_vec);		
+	path* sim_bm(double x0, double t0, double t, std::vector<double>& time_vec);
 	path* make_bb_from_bm(path* bm,double u, double v);
 	MbRandom* random; 
 	
@@ -61,8 +61,8 @@ public:
 	double H(double x, double t);
 	double dadx(double x, double t);
 	//simulation
-	path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec, double rescale);
-	path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec) {return prop_bridge(x0, xt, t0, t,time_vec,-INFINITY);};
+	path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec, double rescale);
+	path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec) {return prop_bridge(x0, xt, t0, t,time_vec,-INFINITY);};
 	//transform variable
 	double fisher(double x) {return acos(1.0-2.0*x);};
 	double inverse_fisher(double x) {return (1.0-cos(x))/2.0;};
@@ -91,7 +91,7 @@ public:
 	double H(double x, double t);
 	double dadx(double x, double t);
 	//simulation
-	path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec);
+	path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec);
 	
 	//transition density
 	double log_transition_density(double x, double y, double t) {return log(x/t) - (x*x+y*y)/(2*t) + log(gsl_sf_bessel_I1_scaled(x*y/t))+x*y/t;};
@@ -118,11 +118,11 @@ public:
 	
 	//for Wright-Fisher with variable population size relative to Wright-Fisher with variable population size
 	//alpha1 is new alpha, alpha 2 is old alpha
-	double H_wfwf_r(double x, double t, double alpha1, double alpha2, double h1, double h2, popsize* rho, bool leftLimit = 0);
-	double dHdt_wfwf_r(double x, double t, double alpha1, double alpha2, double h1, double h2, popsize* rho, bool leftLimit = 0);
-	double a2_wfwf_r(double x, double t, double alpha1, double alpha2, double h1, double h2, popsize* rho, bool leftLimit = 0);
-	double dadx_wfwf_r(double x, double t, double alpha1, double alpha2, double h1, double h2, popsize* rho, bool leftLimit = 0);
-	double log_girsanov_wfwf_r(path* p, double alpha1, double alpha2, double h1, double h2, popsize* rho);
+	double H_wfwf_r(double x, double t, double alpha1, double alpha1p, double alpha2, double alpha2p, popsize* rho, bool leftLimit = 0);
+	double dHdt_wfwf_r(double x, double t, double alpha1, double alpha1p, double alpha2, double alpah2p, popsize* rho, bool leftLimit = 0);
+	double a2_wfwf_r(double x, double t, double alpha1, double alpha1p, double alpha2, double alpha2p, popsize* rho, bool leftLimit = 0);
+	double dadx_wfwf_r(double x, double t, double alpha1, double alpah1p, double alpha2, double alpha2p, popsize* rho, bool leftLimit = 0);
+	double log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, double alpha2, double alpha2p, popsize* rho);
 
 private:
 	std::vector<double> rvMF(double kappa, int d); //generates a vonMises-Fisher random variable
@@ -141,7 +141,7 @@ public:
 	double H(double x, double t);
 	double dadx(double x, double t);
 	//simulation
-	path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec);
+	path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec);
 	
 	//log transition density
 	double log_transition_density(double x, double y, double t) {double w = PI - x; double z = PI - y; return log(w/t) - (w*w+z*z)/(2*t) + log(gsl_sf_bessel_I1_scaled(w*z/t))+w*z/t;};
@@ -167,8 +167,8 @@ public:
 	
 	
 	//simulate
-	path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec);
-	path* prop_path(double x0, double t0, double t, std::vector<double> time_vec);
+	path* prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec);
+	path* prop_path(double x0, double t0, double t, std::vector<double>& time_vec);
 
 private:
 	path* make_bb_from_bm(path* bm,double u, double v);

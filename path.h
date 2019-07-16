@@ -23,6 +23,7 @@ class wfMeasure;
 class popsize;
 class sample_time;
 class MbRandom;
+class param_F;
 
 class path {
 
@@ -30,8 +31,9 @@ public:
 	//constructor
 	path() {trajectory.resize(0); time.resize(0); old_index = -1; old_trajectory.resize(0); old_time.resize(0);}; 
 	path(double x0, double xt, double t0, double t, measure* m, settings& s);
-	path(std::vector<double> p, std::vector<double> t) {trajectory = p; time = t;};
-	path(double x0, double xt, double t0, double t, measure* m, std::vector<double> tvec);
+	path(std::vector<double>& p, std::vector<double>& t) {trajectory = p; time = t;};
+	path(double x0, double xt, double t0, double t, measure* m, std::vector<double>& tvec);
+
 	
 	//element access
 	std::vector<double> get_traj() {return trajectory;};
@@ -39,6 +41,7 @@ public:
 	std::vector<double> get_traj(int i, int j);
 	void set_traj(double x, int i) {trajectory[i] = x;};
 	std::vector<double> get_time() {return time;};
+    std::vector<double>& get_time_ref() {return time;};
 	double get_time(int i) {return time[i];};
 	std::vector<double> get_time(int i, int j);
 	double get_length() {return trajectory.size();};
@@ -79,8 +82,8 @@ protected:
 class wfSamplePath : public path {
 public:
 	//constructor
-    wfSamplePath(std::vector<double> p, std::vector<double> t) : path(p,t) {sample_time_vec.resize(0);};
-	wfSamplePath(settings& s, wfMeasure* wf); //initializes a path from sample info, NB: does not propose the beginning!
+    wfSamplePath(std::vector<double>& p, std::vector<double>& t) : path(p,t) {sample_time_vec.resize(0);};
+    wfSamplePath(settings& s, wfMeasure* wf); //initializes a path from sample info, NB: does not propose the beginning!
     wfSamplePath(std::vector<sample_time*>& times, popsize* myPop, wfMeasure* wf, settings& s, MbRandom* r); //same as previous, but breaks out the parsing
 	
 	//destructor
@@ -112,13 +115,22 @@ public:
     void resetBeginning();
     
 	//sample probabilities
+    double sampleProb(int k, int n, double y);
 	double sampleProb(int i);
 	std::vector<double> sampleProb();
+    
+    //ascertainment
+    double ascertainModern(int min);
+    double ascertainAncient();
+    
 	//print trajectory
 	void print_traj(std::ostream& o = std::cout);
 	
 	//popsize
 	popsize* get_pop() {return myPop;};
+    
+    //set F
+    void set_F(param_F* cur_F) {F = cur_F;};
 	
 private:
 	//relevant to the sample
@@ -147,6 +159,9 @@ private:
 	
 	//the population size history
 	popsize* myPop;
+    
+    //F parameter of Balding-Nichols model
+    param_F* F;
 
 };
 

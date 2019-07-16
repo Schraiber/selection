@@ -10,6 +10,7 @@
 #include <vector>
 #include <cmath>
 #include<iomanip>
+#include <signal.h>
 
 #include "measure.h"
 #include "path.h"
@@ -181,19 +182,14 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 	if (dconts.size() > 2) {
 		//std::cout << "Crossing boundaries!" << std::endl;
 	}
-    
-    //brute force check that it's in the right space
-    //TODO: This shouldn't be necessary, since the loop below should take care of this...
-    for (i = 0; i < p->get_length(); i++) {
-        if (p->get_traj(i) < 0 || p->get_traj(i) >= PI) {
-            return -INFINITY;
-        }
-    }
 	
 	//the derivative time integral
 	double int_mderiv = 0;
 	i = 0;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i >= p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//get the potentials while I'm at it.
 		//first the "beginning" potential 
 		Hm_w0 += H_wf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, rho);
@@ -207,24 +203,44 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
+
 		//and the last little bit, where I need a left limit
 		int_mderiv += (dadx_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dadx_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 		//then the "end" potential
-		Hm_wt += H_wf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, rho, 1);
+        double tmp = H_wf_r(p->get_traj(i), p->get_time(i), alpha1, alpha2, rho, 1);
+        if (tmp != tmp) {
+            std::cout << "computation of H_wf_r is nan" << std::endl;
+            std::cout << "p->get_length() = " << p->get_length() << " i = " << i << " j = " << j << std::endl;
+        }
+        Hm_wt += tmp;
 	}
 
 	//compute the time integral of the square
 	double int_msquare = 0;
 	i = 1;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
 			int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
-		//and the last little bit, where I need a left limit
+        //i--;
+        if (i == p->get_length())  {
+            std::cout << "i is wrong" << std::endl;
+            std::cout << "i = " << i << " p->get_length() = " << p->get_length() << std::endl;
+            std::cout << "j = " << j << std::endl;
+            std::cout << "dconts = " << std::endl;
+            for (int k = 0; k < dconts.size(); k++) {
+                std::cout << dconts[k] << " ";
+            }
+            std::cout << std::endl;
+            raise(SIGSEGV);
+        }		//and the last little bit, where I need a left limit
 		int_msquare += (a2_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+a2_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
@@ -233,19 +249,27 @@ double cbpMeasure::log_girsanov_wf_r(path* p, double alpha1, double alpha2, pops
 	double int_mtime = 0;
 	i = 1;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
 			int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
-		//and the last little bit, where I need a left limit
+        //and the last little bit, where I need a left limit
 		int_mtime += (dHdt_wf_r(p->get_traj(i),p->get_time(i),alpha1,alpha2,rho,1)+dHdt_wf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha2,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
 	
 	if (!is_bridge) {
-		return (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
+        double gir = (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
+        if (gir != gir) {
+            std::cout << "ERROR: log_girsanov_wf_r is nan" << std::endl;
+            std::cout << "Hm_wt = " << Hm_wt << " Hm_w0 = " << Hm_w0 << " int_mderiv = " << int_mderiv << " int_msquare = " << int_msquare << " int_mtime = " << int_mtime << std::endl;
+        }
+        return gir;
 	} else {
 		double gir = (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
 		double cond = log_transition_density(x0, xt, taut-tau0);
@@ -307,6 +331,9 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 	double int_mderiv = 0;
 	i = 0;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i >= p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//get the potentials while I'm at it.
 		//first the "beginning" potential 
 		Hm_w0 += H_wfwf_r(p->get_traj(i), p->get_time(i), alpha1, alpha1p, alpha2, alpha2p, rho);
@@ -321,7 +348,7 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
-		//and the last little bit, where I need a left limit
+        //and the last little bit, where I need a left limit
 		int_mderiv += (dadx_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho,1)+dadx_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 		//then the "end" potential
@@ -332,13 +359,16 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 	double int_msquare = 0;
 	i = 1;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
 			int_msquare += (a2_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho)+a2_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
-		//and the last little bit, where I need a left limit
+        //and the last little bit, where I need a left limit
         int_msquare += (a2_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho,1)+a2_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
@@ -347,25 +377,33 @@ double cbpMeasure::log_girsanov_wfwf_r(path* p, double alpha1, double alpha1p, d
 	double int_mtime = 0;
 	i = 1;
 	for (j = 0; j < dconts.size()-1; j++) {
+        if (i == p->get_length()) { //THIS IS A FUCKING HACK
+            break;
+        }
 		//integrate over the interval using the trapezoid rule
 		while (p->get_time(i) < dconts[j+1]) {
 			int_mtime += (dHdt_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho)+dHdt_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 			* (p->get_time(i)-p->get_time(i-1));
 			i++;
 		}
-		//and the last little bit, where I need a left limit
+        //and the last little bit, where I need a left limit
 		int_mtime += (dHdt_wfwf_r(p->get_traj(i),p->get_time(i),alpha1,alpha1p,alpha2,alpha2p,rho,1)+dHdt_wfwf_r(p->get_traj(i-1),p->get_time(i-1),alpha1,alpha1p,alpha2,alpha2p,rho))/2.0
 		* (p->get_time(i)-p->get_time(i-1));
 	}
 	
+    double gir = Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime;
+    
+    if (gir != gir) {
+        std::cout << "ERROR: log_girsanov_wfwf_r is nan" << std::endl;
+        std::cout << "Hm_wt = " << Hm_wt << " Hm_w0 = " << Hm_w0 << " int_mderiv = " << int_mderiv << " int_msquare = " << int_msquare << " int_mtime = " << int_mtime << std::endl;
+    }
 	
-	
-	return (Hm_wt-Hm_w0-1.0/2.0*int_mderiv-1.0/2.0*int_msquare-int_mtime);
+	return gir;
 
 }
 
 
-path* wienerMeasure::prop_path(double x0, double t0, double t, std::vector<double> time_vec) {
+path* wienerMeasure::prop_path(double x0, double t0, double t, std::vector<double>& time_vec) {
 	std::vector<double> traj(time_vec.size(),0);
 	traj[0] = x0;
 	for (int i = 1; i < time_vec.size(); i++) {
@@ -386,11 +424,11 @@ path* wienerMeasure::make_bb_from_bm(path* bm,double u, double v) {
 		double cur_val = (1-(bm->get_time(i)-t0)/(T-t0))*u + (bm->get_time(i)-t0)/(T-t0)*v+bm->get_traj(i)-(bm->get_time(i)-t0)/(T-t0)*bT;
 		p.push_back(cur_val);
 	}
-	path* bb = new path(p, bm->get_time());
+	path* bb = new path(p, bm->get_time_ref());
 	return bb;
 }
 
-path* wienerMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec) {
+path* wienerMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec) {
 	path* bm;
 	path* bb;
 	bm = prop_path(0,t0,t,time_vec);
@@ -467,7 +505,7 @@ double cbpMeasure::rW(double kappa, int m) {
 	return w;
 }
 
-path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec) {
+path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec) {
 	wienerMeasure myWiener(random);
 	int i;
 	std::vector<double> u(4,0);
@@ -489,7 +527,6 @@ path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::ve
                 std::cout << "The " << i << "th Brownian bridge between " << u[i] << " and " << xt*v[i] << " is faulty:" << std::endl;
 				bb_paths[i]->print_traj(std::cout);
 				bb_paths[i]->print_time(std::cout << std::setprecision(20));
-				exit(1);
 			}
 		}
 		b4_traj[j] = sqrt(b4_traj[j]);
@@ -504,14 +541,14 @@ path* cbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::ve
 }
 
 //NOTE: parameters are as if in the UNFLIPPED case
-path* flippedCbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec) {
+path* flippedCbpMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec) {
 	cbpMeasure cbp(random);
 	path* myPath = cbp.prop_bridge(PI-x0, PI-xt, t0, t,time_vec);
 	myPath->flipCbp();
 	return myPath;
 }
 
-path* wfMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double> time_vec, double rescale) {
+path* wfMeasure::prop_bridge(double x0, double xt, double t0, double t, std::vector<double>& time_vec, double rescale) {
 	double dist_from_0 = x0;
 	if (xt < x0) dist_from_0 = xt;
 	double dist_from_pi = PI-xt;

@@ -23,8 +23,9 @@ class wfSamplePath;
 class param {
 	
 public:
-	param(MbRandom* r) {random = r; numProp = 0; numTunings = 0; numAccept = 0;};
-	param(double x, MbRandom* r) {curVal = x; random = r; oldVal = x; tuning = 1; numTunings = 0; numProp = 0; numAccept = 0;}
+    param(MbRandom* r) {curVal = 0; oldVal = 0; tuning = 1; random = r; numProp = 0; numTunings = 0; numAccept = 0; minTuning = 0;};
+    param(double x, MbRandom* r) {curVal = x; random = r; oldVal = x; tuning = 1; numTunings = 0; numProp = 0; numAccept = 0; minTuning = 0;}
+    ~param() {};
 	virtual double propose() = 0; //return proposal ratio!
 	virtual double prior() = 0; //return prior ratio!
 	virtual void updateTuning();
@@ -74,10 +75,19 @@ private:
 	double scaling;
 };
 
+class param_F: public param {
+public:
+    param_F(double x, MbRandom* r): param(x, r) {tuning = 0.5; minTuning = 0.0;};
+    double propose();
+    double prior();
+    
+};
+
 class param_path: public param {
 public:
-	param_path(path* p, param_gamma* al1, param_gamma* al2, MbRandom* r): param(r) {curPath = p; minUpdate = 10; fracOfPath = 10; min_dt = .001; grid = 10; a1 = al1; a2 = al2;};
+	//param_path(path* p, param_gamma* al1, param_gamma* al2, MbRandom* r): param(r) {curPath = p; minUpdate = 10; fracOfPath = 10; min_dt = .001; grid = 10; a1 = al1; a2 = al2;};
 	param_path(path* p, param_gamma* al1, param_gamma* al2, MbRandom* r, settings& s): param(r) {curPath = p; minUpdate = s.getMinUpdate(); fracOfPath = s.getFracOfPath(); min_dt = s.get_dt(); grid = s.get_grid(); fOrigin = acos(1.0-2.0*s.get_fOrigin()); a1 = al1; a2 = al2;};
+    ~param_path() {delete curPath; delete newPath; delete oldPath;};
 	double propose();
 	double proposeAlleleAge(double newAge, double oldAge);
 	double proposeStart(double newStart);

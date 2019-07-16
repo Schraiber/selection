@@ -18,6 +18,7 @@ class wienerMeasure;
 class MbRandom;
 class settings;
 class param;
+class sample_time;
 
 class mcmc {
 
@@ -44,6 +45,8 @@ private:
 	double compute_lnL(wfSamplePath* p, measure* m, wienerMeasure* wm);
 	
 	double compute_lnL_sample_only(wfSamplePath* p);
+    
+    double ascertain(wfSamplePath* p);
 	
 	int gen;
 	int curProp;
@@ -57,5 +60,6 @@ private:
     void prepareOutput(bool infer_age, std::vector<int> time_idx);
     void printState();
 	
-	
+    bool doAscertain;
+    int minCount; 
 };
